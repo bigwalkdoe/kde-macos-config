@@ -1,0 +1,31 @@
+# kwinrc reference — written by apply.sh via kwriteconfig6 (merged into ~/.config/kwinrc)
+
+[General]
+decorationTheme=Orchis
+BorderlessMaximizedWindows=true
+
+[Desktops]
+# Id_1 is preserved from the baseline; Id_2..Id_4 are newly generated UUIDs.
+Number=4
+Rows=1
+Id_1=<preserved from baseline>
+Id_2=<uuid>
+Id_3=<uuid>
+Id_4=<uuid>
+
+# [Xwayland] and [Tiling][...] sections from the baseline are preserved untouched.
+
+[Plugins]
+blurEnabled=true
+overviewEnabled=true
+slidingpopupsEnabled=true
+fadeEnabled=true
+glideEnabled=true
+maximizeEnabled=true
+minimizeEnabled=true
+scaleEnabled=true
+resizeEnabled=true
+wobblywindowsEnabled=false
+kwin4_effect_magiclampEnabled=false
+kwin4_effect_ballEnabled=false
+kwin4_effect_kcubeEnabled=false

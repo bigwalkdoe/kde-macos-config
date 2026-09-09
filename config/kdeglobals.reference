@@ -1,0 +1,19 @@
+# kdeglobals keys — written by apply.sh (plasma-apply-* tools + kwriteconfig6)
+
+# applied by plasma-apply-desktoptheme:
+[KDE]
+LookAndFeelPackage=com.github.vinceliuice.Orchis      # (!) --dark mode uses com.github.vinceliuice.Orchis-dark
+
+# applied by plasma-apply-colorscheme:
+[General]
+ColorScheme=Orchis                                    # (!) --dark mode uses OrchisDark
+ColorSchemeHash=<computed by plasma-apply-colorscheme>
+
+# applied by kwriteconfig6:
+[General]
+font=Noto Sans,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=FairyWren_Light
+
+# all [Colors:*], [ColorEffects:*], [WM] and [KDE] groups from the baseline are preserved.

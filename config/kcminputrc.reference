@@ -1,0 +1,5 @@
+# kcminputrc keys — written by apply.sh (kwriteconfig6, merged; all libinput tuning preserved)
+
+[Mouse]
+cursorTheme=Breeze_Light
+cursorSize=24
