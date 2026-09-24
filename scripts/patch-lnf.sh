@@ -30,8 +30,8 @@ say() { echo "### $*"; }
 
 say "Patching user-local Orchis look-and-feel defaults"
 for l in \
-  "com.github.vinceliuice.Orchis Breeze_Light FairyWren_Light" \
-  "com.github.vinceliuice.Orchis-dark breeze_cursors FairyWren_Dark"; do
+  "com.github.vinceliuice.Orchis Bibata-Modern-Ice FairyWren_Light" \
+  "com.github.vinceliuice.Orchis-dark Bibata-Modern-Ice FairyWren_Dark"; do
   set -- $l
   if ! ld "$1"; then
     say "no user-local $1 -- copying system LNF so the patch sticks"

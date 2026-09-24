@@ -126,8 +126,7 @@ cd ~/kde-macos-config
 - **Icons:** `FairyWren_Light` / `FairyWren_Dark` (installed; the macOS-style icon
   set that belongs to the Orchis ecosystem). The Orchis LNF would fall back to
   missing `Tela-circle` icons, so the icon theme is explicitly overridden.
-- **Cursor:** `Breeze_Light` / `breeze_cursors` (native; avoids pulling in the
-  missing `Vimix` cursor the LNF references).
+- **Cursor:** `Bibata-Modern-Ice` (macOS smoothed edges; replaces the sharp Breeze cursor the LNF ships)
 - **Fonts:** keep `Noto Sans 10` (clean Helvetica-like family, readable at 10pt).
 - **Splash:** `AppleSplash` (installed) via `ksplashrc`.
 - **GTK:** `Breeze` (light) / `Orchis-Dark` (dark) themes, matching `FairyWren`

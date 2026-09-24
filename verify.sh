@@ -65,8 +65,8 @@ Q(){ q plasmarc Theme name; }
 LNF="$(Q)"
 SUPPORTED="no"
 case "$LNF" in
-  Orchis)      SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis;      EXP_COLOR=Orchis;     EXP_ICONS=FairyWren_Light; EXP_CURSOR=Breeze_Light;  EXP_GTK=Breeze;       EXP_DECO=__aurorae__svg__Orchis ;;
-  Orchis-dark) SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis-dark; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=breeze_cursors; EXP_GTK=Orchis-Dark; EXP_DECO=__aurorae__svg__Orchis-dark ;;
+  Orchis)      SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis;      EXP_COLOR=Orchis;     EXP_ICONS=FairyWren_Light; EXP_CURSOR=Bibata-Modern-Ice;  EXP_GTK=Breeze;       EXP_DECO=__aurorae__svg__Orchis ;;
+  Orchis-dark) SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis-dark; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=Bibata-Modern-Ice; EXP_GTK=Orchis-Dark; EXP_DECO=__aurorae__svg__Orchis-dark ;;
   *) EXP_LNF="($LNF)"; EXP_COLOR="($LNF)"; EXP_ICONS="($LNF)"; EXP_CURSOR="($LNF)"; EXP_GTK="($LNF)"; EXP_DECO="($LNF)"; echo "note: unknown look-and-feel '$LNF' (expected Orchis or Orchis-dark)"; ;;
 esac
 CHK "look-and-feel is a supported mode" "yes" "$SUPPORTED"
@@ -85,8 +85,8 @@ CHK "gtk icons" "$EXP_ICONS" "$(grep '^gtk-icon-theme-name=' "$CFG/gtk-3.0/setti
 
 echo "--- LNF defaults patched (survives package updates?) ---"
 LNFD="$HOME/.local/share/plasma/look-and-feel"
-for pair in "com.github.vinceliuice.Orchis Breeze_Light FairyWren_Light" \
-            "com.github.vinceliuice.Orchis-dark breeze_cursors FairyWren_Dark"; do
+for pair in "com.github.vinceliuice.Orchis Bibata-Modern-Ice FairyWren_Light" \
+             "com.github.vinceliuice.Orchis-dark Bibata-Modern-Ice FairyWren_Dark"; do
   set -- $pair
   D="$LNFD/$1/contents/defaults"
   CUR="$(grep '^cursorTheme=' "$D" 2>/dev/null | cut -d= -f2)"

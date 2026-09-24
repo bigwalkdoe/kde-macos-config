@@ -11,8 +11,8 @@ ROOT="$(cd "$(dirname "$0")" && pwd)" && cd "$ROOT" || exit 1
 
 MODE="${1:---light}"
 case "$MODE" in
-  --light) LNF=Orchis;         LNF_PKG="com.github.vinceliuice.Orchis";       COLORS=Orchis;      ICONS=FairyWren_Light; CURSOR=Breeze_Light;   SFX="light" ;;
-  --dark)  LNF=Orchis-dark;    LNF_PKG="com.github.vinceliuice.Orchis-dark";  COLORS=OrchisDark;  ICONS=FairyWren_Dark;  CURSOR=breeze_cursors; SFX="dark" ;;
+  --light) LNF=Orchis; LNF_PKG="com.github.vinceliuice.Orchis";       COLORS=Orchis;      ICONS=FairyWren_Light; CURSOR=Bibata-Modern-Ice; SFX="light" ;;
+  --dark)  LNF=Orchis-dark; LNF_PKG="com.github.vinceliuice.Orchis-dark"; COLORS=OrchisDark;  ICONS=FairyWren_Dark;  CURSOR=Bibata-Modern-Ice; SFX="dark" ;;
   *) echo "usage: $0 [--light|--dark]"; exit 2 ;;
 esac
 WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
