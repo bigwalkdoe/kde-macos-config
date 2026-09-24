@@ -207,6 +207,29 @@ shutdown_shell graceful || die "could not stop plasmashell"
 start_shell || die "plasmashell did not come back"
 
 say "Applying panel layout (scripts/layout.js)"
+# The dock pins modelink-ops (a vite dev app). Its .desktop is user-level and
+# points at scripts/modelink-ops-launch.sh, so ensure it exists before the
+# layout script resolves the launcher by name.
+MODELINK_DESKTOP="$HOME/.local/share/applications/modelink-ops.desktop"
+if [ -d "$HOME/dev/github/arcaden-labs/modelink-ops" ]; then
+  mkdir -p "$HOME/.local/share/applications"
+  MODELINK_ICON="$HOME/dev/github/arcaden-labs/modelink-ops/public/logo-mark.svg"
+  cat > "$MODELINK_DESKTOP" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Modelink Ops
+Comment=Modelink ops console (vite dev server)
+Exec=$ROOT/scripts/modelink-ops-launch.sh
+Icon=$MODELINK_ICON
+Terminal=false
+Categories=Development;
+StartupNotify=false
+EOF
+  echo "  wrote $MODELINK_DESKTOP"
+else
+  [ -f "$MODELINK_DESKTOP" ] && rm -f "$MODELINK_DESKTOP"
+  echo "  note: modelink-ops repo absent, skipping its dock launcher"
+fi
 LAYOUT_OUT="$(gdbus call --session --dest org.kde.plasmashell --object-path /PlasmaShell \
   --method org.kde.PlasmaShell.evaluateScript "$(cat "$ROOT/scripts/layout.js")" 2>&1)" || die "layout script failed: $LAYOUT_OUT"
 echo "$LAYOUT_OUT"

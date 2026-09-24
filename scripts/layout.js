@@ -64,7 +64,8 @@ tasks.writeConfig(
     "applications:org.kde.konsole.desktop," +       // Terminal
     "applications:org.mozilla.firefox.desktop," +   // Browser
     "applications:com.google.Chrome.desktop," +     // Browser
-    "applications:code.desktop");                   // IDE
+    "applications:code.desktop," +                  // IDE
+    "applications:modelink-ops.desktop");           // dev console (vite app)
 tasks.reloadConfig();
 tasks.writeConfig("separateLaunchers", true);       // pinned != running, visually distinct
 tasks.reloadConfig();

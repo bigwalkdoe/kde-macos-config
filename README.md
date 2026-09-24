@@ -71,6 +71,7 @@ kde-macos-config/
 ├── config/              reference values for every setting this project writes
 ├── scripts/
 │   ├── patch-lnf.sh     pins icons/cursor into user-local Orchis LNF defaults
+│   ├── modelink-ops-launch.sh  dev-server launcher for the dock pin
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
 │   └── tray-config.js   system tray curation (pinned items + order)
 └── screenshots/         captured after apply (if tooling available)
@@ -218,10 +219,11 @@ identically.
 - **Reboot persistence:** apply.sh verifies persistence across a full
   plasmashell reload (equivalent to a session reload). A full `reboot` check is
   a manual step — run `./verify.sh` after the next login.
-- **Modelink:** it is a development project (`~/dev/github/modelink-*`), not an
-  installed application, so no dock entry is created. To pin it: add a
-  `~/.local/share/applications/modelink.desktop` and extend the `launchers` list
-  in `scripts/layout.js`.
+- **Modelink:** `modelink-ops` is a vite dev app (`~/dev/github/arcaden-labs/
+  modelink-ops`, port 3001), so it is pinned in the dock via a generated
+  `~/.local/share/applications/modelink-ops.desktop` that starts the dev server
+  on demand (or opens the browser if it is already running). Repo gone? The
+  entry is removed automatically on the next apply.
 - **GTK light theme:** installed Orchis GTK themes are dark-only, so light mode
   maps GTK apps to native `Breeze`. Firefox/Chrome/VSCode draw their own UI.
 
