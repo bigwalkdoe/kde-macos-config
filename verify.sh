@@ -97,6 +97,17 @@ echo "--- gtk ($LNF) ---"
 CHK "gtk-3.0 theme" "$EXP_GTK" "$(grep '^gtk-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
 CHK "gtk icons" "$EXP_ICONS" "$(grep '^gtk-icon-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
 
+echo "--- LNF defaults patched (survives package updates?) ---"
+LNFD="$HOME/.local/share/plasma/look-and-feel"
+for pair in "com.github.vinceliuice.Orchis Breeze_Light FairyWren_Light" \
+            "com.github.vinceliuice.Orchis-dark breeze_cursors FairyWren_Dark"; do
+  set -- $pair
+  D="$LNFD/$1/contents/defaults"
+  CUR="$(grep '^cursorTheme=' "$D" 2>/dev/null | cut -d= -f2)"
+  ICO="$(grep '^Theme=' "$D" 2>/dev/null | cut -d= -f2)"
+  CHK "LNF $1: cursor=$2 icons=$3" "yes" "$([ "$CUR" = "$2" ] && [ "$ICO" = "$3" ] && echo yes || echo no)"
+done
+
 echo "--- backup present ---"
 BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
 CHK "timestamped backup exists" "yes" "$([ -n "$BKL" ] && echo yes || echo no)"

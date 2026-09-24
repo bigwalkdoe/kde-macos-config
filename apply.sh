@@ -191,7 +191,7 @@ say "Desktop: clean (no icons) containment"
 APP=plasma-org.kde.plasma.desktop-appletsrc
 if [ -f "$HOME/.config/$APP" ]; then
   sed -i 's/^plugin=org\.kde\.plasma\.folder$/plugin=org.kde.desktopcontainment/' "$HOME/.config/$APP"
-  echo "desktopcontainment plugin lines: $(grep -c '^plugin=org.kde.desktopcontainment' "$HOME/.config/$APP") (expect 1)"
+  echo "desktopcontainment plugin lines: $(grep -c '^plugin=org.kde.desktopcontainment' "$HOME/.config/$APP") (one per screen)"
 fi
 
 say "Restarting plasmashell (systemd unit)"
