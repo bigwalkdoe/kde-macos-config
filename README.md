@@ -85,6 +85,13 @@ cd ~/kde-macos-config
 ./sync.sh            # snapshot current live config -> config/ (normalized)
 ./sync.sh --commit   # ...and commit it
 ./rollback.sh        # restore the most recent backup
+
+# Dark/light switching is safe in any of these forms:
+#   ./apply.sh --light | --dark   (run this repo; preferred)
+#   System Settings -> Global Theme -> Orchis / Orchis-dark
+#   lookandfeeltool -a com.github.vinceliuice.Orchis[-dark]
+# All three paths converge because scripts/patch-lnf.sh normalizes the
+# user-local LNF defaults before each apply — icons and cursor stay pinned.
 ```
 
 ## 5. What exactly is applied
@@ -93,16 +100,19 @@ cd ~/kde-macos-config
 - **Look-and-feel:** `com.github.vinceliuice.Orchis` (`Orchis-dark`) via
   `plasma-apply-desktoptheme` — colors, splash, plasma framework theme, kwin
   decoration wiring. The packaged panel layout is NOT used; see Panels below.
+  The stock Orchis LNF defaults reference uninstalled Vimix cursors + Tela-circle
+  icons, so `scripts/patch-lnf.sh` patches the user-local LNF copies to keep the
+  repo's FairyWren icons + Breeze cursors on **every** switch path.
 - **Color scheme:** `Orchis` / `OrchisDark` (installed) via `plasma-apply-colorscheme`.
-- **Icons:** `FairyWren_Light` (installed; the macOS-style icon set that belongs
-  to the Orchis ecosystem). The Orchis LNF would fall back to missing
-  `Tela-circle` icons, so the icon theme is explicitly overridden.
-- **Cursor:** `Breeze_Light` (native; avoids pulling in the missing `Vimix`
-  cursor the LNF references).
+- **Icons:** `FairyWren_Light` / `FairyWren_Dark` (installed; the macOS-style icon
+  set that belongs to the Orchis ecosystem). The Orchis LNF would fall back to
+  missing `Tela-circle` icons, so the icon theme is explicitly overridden.
+- **Cursor:** `Breeze_Light` / `breeze_cursors` (native; avoids pulling in the
+  missing `Vimix` cursor the LNF references).
 - **Fonts:** keep `Noto Sans 10` (clean Helvetica-like family, readable at 10pt).
 - **Splash:** `AppleSplash` (installed) via `ksplashrc`.
-- **GTK:** `Breeze` (light) / `Orchis-Dark` (dark) themes, `FairyWren_Light`
-  icons, `Breeze_Light` cursor — user-level only.
+- **GTK:** `Breeze` (light) / `Orchis-Dark` (dark) themes, matching `FairyWren`
+  icons + Breeze cursors — user-level only.
 
 ### Panels (top bar + dock) — `scripts/layout.js`
 Executed through `org.kde.PlasmaShell.evaluateScript` (native API):

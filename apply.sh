@@ -11,8 +11,8 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"; cd "$ROOT"
 
 MODE="${1:---light}"
 case "$MODE" in
-  --light) LNF=Orchis;         COLORS=Orchis;      SFX="light" ;;
-  --dark)  LNF=Orchis-dark;    COLORS=OrchisDark;  SFX="dark" ;;
+  --light) LNF=Orchis;         COLORS=Orchis;      ICONS=FairyWren_Light; CURSOR=Breeze_Light;   SFX="light" ;;
+  --dark)  LNF=Orchis-dark;    COLORS=OrchisDark;  ICONS=FairyWren_Dark;  CURSOR=breeze_cursors; SFX="dark" ;;
   *) echo "usage: $0 [--light|--dark]"; exit 2 ;;
 esac
 WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
@@ -101,12 +101,16 @@ BACKUP="$(bash "$ROOT/backup.sh" | grep '^BackUp=' | cut -d= -f2-)"
 echo "Backup directory: $BACKUP"; sleep 1
 
 say "Look-and-feel: $LNF"
+# Patch user-local Orchis LNF defaults FIRST, so any switch path (this script,
+# System Settings Global Theme, lookandfeeltool) applies the repo's icons/cursor
+# instead of the missing Vimix cursor + Tela-circle icons they ship with.
+bash "$ROOT/scripts/patch-lnf.sh" || die "LNF patch failed"
 plasma-apply-desktoptheme "$LNF"  || die "plasma-apply-desktoptheme failed"
 plasma-apply-colorscheme "$COLORS" || die "plasma-apply-colorscheme failed"
 
 say "Icons, cursor, fonts"
-kwriteconfig6 --file kdeglobals --group Icons --key Theme FairyWren_Light || die "icons"
-kwriteconfig6 --file kcminputrc --group Mouse --key cursorTheme Breeze_Light || die "cursor theme"
+kwriteconfig6 --file kdeglobals --group Icons --key Theme "$ICONS" || die "icons"
+kwriteconfig6 --file kcminputrc --group Mouse --key cursorTheme "$CURSOR" || die "cursor theme"
 kwriteconfig6 --file kcminputrc --group Mouse --key cursorSize 24 || die "cursor size"
 kwriteconfig6 --file kdeglobals --group General --key font "Noto Sans,10,-1,5,50,0,0,0,0,0" || die "font"
 kwriteconfig6 --file ksplashrc --group KSplash --key Theme AppleSplash || die "splash"
@@ -167,12 +171,12 @@ gtk-application-prefer-dark-theme=false
 gtk-button-images=true
 gtk-cursor-blink=true
 gtk-cursor-blink-time=1000
-gtk-cursor-theme-name=Breeze_Light
+gtk-cursor-theme-name=$CURSOR
 gtk-cursor-theme-size=24
 gtk-decoration-layout=icon:minimize,maximize,close
 gtk-enable-animations=true
 gtk-font-name=Noto Sans,  10
-gtk-icon-theme-name=FairyWren_Light
+gtk-icon-theme-name=$ICONS
 gtk-menu-images=true
 gtk-modules=window-decorations-gtk-module:colorreload-gtk-module
 gtk-primary-button-warps-slider=true

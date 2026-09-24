@@ -77,15 +77,25 @@ CHK "blur on" "true" "$(q kwinrc Plugins blurEnabled)"
 CHK "borderless maximized (macOS-like)" "true" "$(q kwinrc General BorderlessMaximizedWindows)"
 
 echo "--- theme ---"
-CHK "look-and-feel = Orchis (plasmarc)" "Orchis" "$(q plasmarc Theme name)"
-CHK "color scheme = Orchis" "Orchis" "$(q kdeglobals General ColorScheme)"
-CHK "icons = FairyWren_Light" "FairyWren_Light" "$(q kdeglobals Icons Theme)"
-CHK "cursor = Breeze_Light" "Breeze_Light" "$(q kcminputrc Mouse cursorTheme)"
+# Determine the active mode from the look-and-feel actually in use; both the
+# light (Orchis) and dark (Orchis-dark) variants must be independently verified.
+Q(){ q plasmarc Theme name; }
+LNF="$(Q)"
+SUPPORTED="no"
+case "$LNF" in
+  Orchis)      SUPPORTED="yes"; EXP_COLOR=Orchis;     EXP_ICONS=FairyWren_Light; EXP_CURSOR=Breeze_Light;  EXP_GTK=Breeze; ;;
+  Orchis-dark) SUPPORTED="yes"; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=breeze_cursors; EXP_GTK=Orchis-Dark; ;;
+  *) EXP_COLOR="($LNF)"; EXP_ICONS="($LNF)"; EXP_CURSOR="($LNF)"; EXP_GTK="($LNF)"; echo "note: unknown look-and-feel '$LNF' (expected Orchis or Orchis-dark)"; ;;
+esac
+CHK "look-and-feel is a supported mode" "yes" "$SUPPORTED"
+CHK "color scheme ($LNF)" "$EXP_COLOR" "$(q kdeglobals General ColorScheme)"
+CHK "icons ($LNF)" "$EXP_ICONS" "$(q kdeglobals Icons Theme)"
+CHK "cursor ($LNF)" "$EXP_CURSOR" "$(q kcminputrc Mouse cursorTheme)"
 CHK "font = Noto Sans 10" "Noto Sans,10,-1,5,50,0,0,0,0,0" "$(q kdeglobals General font)"
 
-echo "--- gtk ---"
-CHK "gtk-3.0 theme" "Breeze" "$(grep '^gtk-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
-CHK "gtk icons" "FairyWren_Light" "$(grep '^gtk-icon-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
+echo "--- gtk ($LNF) ---"
+CHK "gtk-3.0 theme" "$EXP_GTK" "$(grep '^gtk-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
+CHK "gtk icons" "$EXP_ICONS" "$(grep '^gtk-icon-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
 
 echo "--- backup present ---"
 BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
