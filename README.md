@@ -53,8 +53,9 @@ a polished **macOS-inspired** workflow while staying 100% native to KDE Plasma.
   `org.kde.plasma.systemtray`.
 - **Backup before touch, always.** Every apply creates a timestamped backup
   under `~/.config/kde-backups/` and restores it automatically on failure.
-- **User-level only.** No system files are touched. (The login screen SDDM theme
-  is *not* changed because that requires root; see §10.)
+- **User-level only.** No system files are touched by `apply.sh`.
+  **One deliberate exception:** the login screen (SDDM) requires root, so it is
+  handled as an explicit, separate step — `sudo ./scripts/install-sddm-orchis.sh`.
 
 ## 3. Repository layout
 
@@ -71,6 +72,7 @@ kde-macos-config/
 ├── config/              reference values for every setting this project writes
 ├── scripts/
 │   ├── patch-lnf.sh     pins icons/cursor into user-local Orchis LNF defaults
+│   ├── install-sddm-orchis.sh  (sudo) installs the Orchis login theme
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
 │   └── tray-config.js   system tray curation (pinned items + order)
 └── screenshots/         captured after apply (if tooling available)
@@ -211,10 +213,11 @@ identically.
 
 ## 10. Known limitations
 
-- **Login screen (SDDM):** not customized — requires root
-  (`/etc/sddm.conf.d/`), and this project intentionally never touches system
-  files. To use an Orchis SDDM theme later: install it, then with sudo set
-  `[Theme] Current=<theme>` in `/etc/sddm.conf.d/10-orchis.conf`.
+- **Login screen (SDDM):** not customized by `apply.sh` — it requires root
+  (`/usr/share/sddm/themes`, `/etc/sddm.conf.d/`). Install the Orchis login
+  theme explicitly (one-time, idempotent, preserves your cursor/font settings):
+  `sudo ./scripts/install-sddm-orchis.sh`. Preview without logging out:
+  `sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/Orchis &`.
 - **Reboot persistence:** apply.sh verifies persistence across a full
   plasmashell reload (equivalent to a session reload). A full `reboot` check is
   a manual step — run `./verify.sh` after the next login.
