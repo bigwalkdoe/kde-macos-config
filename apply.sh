@@ -7,7 +7,7 @@
 # On failure before completion, the backup is restored automatically.
 # Usage: ./apply.sh [--light|--dark]
 set -u
-ROOT="$(cd "$(dirname "$0")" && pwd)"; cd "$ROOT"
+ROOT="$(cd "$(dirname "$0")" && pwd)" && cd "$ROOT" || exit 1
 
 MODE="${1:---light}"
 case "$MODE" in
@@ -55,14 +55,16 @@ restore_backup(){
 # NOTE: the bus-name checks anchor on "org.kde.plasmashell" + whitespace so the
 # kded6-owned name "org.kde.plasmashell.accentColor" can never match.
 wait_shell_up() {
-  for i in $(seq 1 30); do
+  local _
+  for _ in $(seq 1 30); do
     busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' && return 0
     sleep 1
   done
   return 1
 }
 wait_shell_down() {
-  for i in $(seq 1 20); do
+  local _
+  for _ in $(seq 1 20); do
     busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' || return 0
     sleep 1
   done
@@ -236,6 +238,20 @@ for pid in $PIDS; do
 done
 
 say "Wallpaper"
+WALLPAPER_DIR="$HOME/.local/share/wallpapers/kde-setup-02"
+WALLPAPER_NAME="wavy_lines_v01_5120x2880.png"
+if [ ! -f "$WALLPAPER" ]; then
+  # Self-heal: install the vendored asset from assets/wallpapers/ (committed
+  # to this repo so apply.sh is reproducible on a clean machine without the
+  # original Downloads zip).
+  VENDORED="$ROOT/assets/wallpapers/$WALLPAPER_NAME"
+  if [ -f "$VENDORED" ]; then
+    mkdir -p "$WALLPAPER_DIR"
+    cp -f "$VENDORED" "$WALLPAPER" && echo "installed vendored wallpaper: $WALLPAPER"
+  else
+    die "wallpaper file missing: $WALLPAPER (and no vendored copy at $VENDORED)"
+  fi
+fi
 [ -f "$WALLPAPER" ] || die "wallpaper file missing: $WALLPAPER"
 plasma-apply-wallpaperimage "$WALLPAPER" || say "note: set wallpaper via Desktop right-click if needed"
 sleep 2

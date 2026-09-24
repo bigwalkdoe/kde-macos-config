@@ -10,7 +10,6 @@
 # Usage: sudo ./scripts/install-sddm-orchis.sh   (or plain, it prompts for sudo)
 #        ./scripts/install-sddm-orchis.sh --force  bypass the fast-exit and reinstall
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Stage under the invoking (human) user even though this script runs as root.
 UUSER="${SUDO_USER:-$USER}"
 STAGE="/home/$UUSER/.local/share/sddm-src"
@@ -60,8 +59,8 @@ if [ "$INSTALLED_OK" = "yes" ]; then
 fi
 
 say "Stage Orchis SDDM theme (6.0 / Qt6)"
-if [ -d "$STAGE/$NAME" ]; then
-  rm -rf "$STAGE/$NAME"; fi
+if [ -d "${STAGE:?}/$NAME" ]; then
+  rm -rf "${STAGE:?}/$NAME"; fi
 git clone --depth 1 "$SRC_REPO" "$TMP/Orchis-kde" >/dev/null 2>&1 \
   || { echo "FAIL: clone from $SRC_REPO" >&2; exit 1; }
 [ -d "$TMP/Orchis-kde/sddm/6.0/$NAME" ] || { echo "FAIL: sddm/6.0/$NAME missing in repo" >&2; exit 1; }
@@ -72,7 +71,7 @@ echo "staged: $STAGE/$NAME ($(du -sh "$STAGE/$NAME" | cut -f1))"
 
 say "Install to $THEME_DIR/$NAME"
 mkdir -p "$THEME_DIR"
-[ -d "$THEME_DIR/$NAME" ] && rm -rf "$THEME_DIR/$NAME"
+[ -d "${THEME_DIR:?}/$NAME" ] && rm -rf "${THEME_DIR:?}/$NAME"
 cp -a "$STAGE/$NAME" "$THEME_DIR/$NAME"
 [ -f "$THEME_DIR/$NAME/metadata.desktop" ] || { echo "FAIL: install" >&2; exit 1; }
 echo "installed."
