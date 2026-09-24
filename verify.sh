@@ -22,27 +22,9 @@ WALL="$(grep -c 'wavy_lines_v01_5120x2880.png' "$CFG/plasma-org.kde.plasma.deskt
 CHKR "wallpaper configured on every screen (>=1)" "1" "32" "$WALL"
 
 echo "--- panels (live) ---"
-cat > /tmp/kde-macos-verify.js <<EOF
-var log = [];
-var ids = panelIds.slice();
-log.push("count=" + ids.length);
-for (var i = 0; i < ids.length; i++) {
-    var p = panelById(ids[i]);
-    if (!p) { continue; }
-    var wt = [];
-    var wids = p.widgetIds;
-    for (var w = 0; w < wids.length; w++) {
-        var wid = p.widgetById(wids[w]);
-        if (wid) { wt.push(wid.type); }
-    }
-    log.push(p.location + ";h=" + Math.round(p.height) + ";float=" + p.floating +
-             ";widgets=" + wt.join(","));
-}
-print(log.join("|"));
-EOF
 RAW="$(
   gdbus call --session --dest org.kde.plasmashell --object-path /PlasmaShell \
-    --method org.kde.PlasmaShell.evaluateScript "$(cat /tmp/kde-macos-verify.js)" 2>/dev/null
+    --method org.kde.PlasmaShell.evaluateScript "$(cat "$ROOT/scripts/probe-panels.js")" 2>/dev/null
 )"
 # strip the gdbus '(...)' wrapper and split the log on the '|' separator
 PROBE="$(printf '%s' "$RAW" | sed -e "1s/^('//" -e "\$s/',)\$//" | tr '|' '\n')"

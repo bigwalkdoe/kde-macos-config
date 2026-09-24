@@ -14,7 +14,7 @@ fi
 echo "Restoring from: $BK"
 systemctl --user stop plasma-plasmashell.service 2>/dev/null || true
 pkill -9 -x plasmashell 2>/dev/null || true
-for i in $(seq 1 20); do
+for _ in $(seq 1 20); do
   # exact-name match: org.kde.plasmashell.accentColor (kded6) must NOT count
   busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' || break
   sleep 1
@@ -60,7 +60,7 @@ busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure 2>/dev/null || tr
 
 systemctl --user reset-failed plasma-plasmashell.service 2>/dev/null || true
 systemctl --user start plasma-plasmashell.service 2>/dev/null || { ( setsid nohup plasmashell >/dev/null 2>&1 & ) || true; }
-for i in $(seq 1 30); do
+for _ in $(seq 1 30); do
   busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' && break
   sleep 1
 done

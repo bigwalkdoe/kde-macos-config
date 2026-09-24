@@ -50,27 +50,14 @@ kreadconfig6 --file kwinrc --group Desktops --key Number 2>/dev/null || echo 1
 kreadconfig6 --file kwinrc --group Desktops --key Rows 2>/dev/null || echo 0
 
 echo "=== panels (read-only plasmashell probe) ==="
-cat > /tmp/kde-macos-probe.js <<'EOF'
-var log = [];
-var ids = panelIds.slice();
-log.push("panelCount=" + ids.length);
-for (var i = 0; i < ids.length; i++) {
-    var p = panelById(ids[i]);
-    if (!p) { continue; }
-    var wtypes = [];
-    var wids = p.widgetIds;
-    for (var w = 0; w < wids.length; w++) {
-        var wid = p.widgetById(wids[w]);
-        if (wid) { wtypes.push(wid.type); }
-    }
-    log.push("panel " + p.location + " h=" + p.height + " floating=" + p.floating +
-             " widgets=" + wtypes.join(","));
-}
-print(log.join("|"));
-EOF
+ROOT="$(cd "$(dirname "$0")" && pwd)"
 gdbus call --session --dest org.kde.plasmashell --object-path /PlasmaShell \
-  --method org.kde.PlasmaShell.evaluateScript "$(cat /tmp/kde-macos-probe.js)" 2>&1 \
-  | sed -e "1s/^('//" -e "\$s/',)\$//" | tr '|' '\n' || echo "(cannot reach plasmashell)"
+  --method org.kde.PlasmaShell.evaluateScript "$(cat "$ROOT/scripts/probe-panels.js")" 2>&1 \
+  | sed -e "1s/^('//" -e "\$s/',)\$//" | tr '|' '\n' \
+  | sed -e 's/^count=/panelCount=/' \
+        -e 's/^\(top\|bottom\|left\|right\);h=/panel \1 h=/' \
+        -e 's/;float=/ floating=/' -e 's/;widgets=/ widgets=/' \
+  || echo "(cannot reach plasmashell)"
 
 echo "=== gtk theme settings ==="
 grep -E 'gtk-theme-name|gtk-icon-theme-name|gtk-cursor-theme-name' ~/.config/gtk-3.0/settings.ini 2>/dev/null || echo "(default)"

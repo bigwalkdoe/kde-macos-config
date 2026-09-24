@@ -47,7 +47,10 @@ a polished **macOS-inspired** workflow while staying 100% native to KDE Plasma.
   uses the exact value System Settings writes (`org.kde.desktopcontainment`).
 - **No random third-party themes.** Everything here comes from packages already
   installed on this machine (Orchis / FairyWren / MkosBigSur assets, `AppleSplash`)
-  or stock KDE components. **No Latte Dock, no abandoned infrastructure.**
+  or stock KDE components. **No Latte Dock, no abandoned infrastructure.** The
+  one asset not shipped by an installed package — the wavy-lines wallpaper —
+  is vendored in `assets/wallpapers/` and auto-installed by `apply.sh` if the
+  live copy is missing, so a clean machine never fails on it.
 - **Native over third-party.** Global menu = `org.kde.plasma.appmenu`, dock =
   `org.kde.plasma.icontasks` (the Plasma 6 Icons-only Task Manager), tray =
   `org.kde.plasma.systemtray`.
@@ -69,7 +72,9 @@ kde-macos-config/
 ├── rollback.sh          restore most recent backup + reload desktop
 ├── detect.sh            non-destructive environment inventory
 ├── verify.sh            PASS/FAIL verification (files + live session + health)
+├── assets/wallpapers/   vendored 5K wallpaper (applied by apply.sh if missing)
 ├── config/              reference values for every setting this project writes
+├── .github/workflows/   CI: shellcheck + bash -n on every push/PR
 ├── scripts/
 │   ├── patch-lnf.sh     pins icons/cursor into user-local Orchis LNF defaults
 │   ├── install-sddm-orchis.sh  (sudo) installs the Orchis login theme

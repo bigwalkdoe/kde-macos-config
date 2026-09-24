@@ -1,0 +1,31 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    name: shellcheck + bash -n
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: shellcheck (all shell scripts, fail on warning or higher)
+        run: |
+          shellcheck -S warning \
+            apply.sh backup.sh detect.sh rollback.sh switch.sh sync.sh verify.sh \
+            scripts/*.sh
+
+      - name: bash syntax check
+        run: |
+          bash -n \
+            apply.sh backup.sh detect.sh rollback.sh switch.sh sync.sh verify.sh \
+            scripts/*.sh

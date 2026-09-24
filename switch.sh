@@ -21,7 +21,8 @@ SUNSET="19:30"
 [ -f "$UCFG/switch.conf" ] && . "$UCFG/switch.conf"
 
 desired_mode() {
-  local now="$(date +%H%M)" up="${SUNRISE//:/}" dn="${SUNSET//:/}"
+  local now up dn
+  now="$(date +%H%M)" up="${SUNRISE//:/}" dn="${SUNSET//:/}"
   [ "$now" -ge "$up" ] && [ "$now" -lt "$dn" ] && echo light || echo dark
 }
 
