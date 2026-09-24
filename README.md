@@ -109,12 +109,19 @@ cd ~/kde-macos-config
 ## 5. What exactly is applied
 
 ### Theme (light default / `--dark` variant)
-- **Look-and-feel:** `com.github.vinceliuice.Orchis` (`Orchis-dark`) via
-  `plasma-apply-desktoptheme` — colors, splash, plasma framework theme, kwin
-  decoration wiring. The packaged panel layout is NOT used; see Panels below.
+- **Look-and-feel:** `com.github.vinceliuice.Orchis` (`Orchis-dark`) applied as a full
+  Global Theme via `plasma-apply-lookandfeel -a` (records `kdeglobals [KDE]
+  LookAndFeelPackage` and applies the patched defaults: colorscheme, icons,
+  cursor, KWin aurorae decoration, kvantum widgets). `plasma-apply-desktoptheme`
+  is also run for the plasma style. The packaged panel layout is NOT used; see
+  Panels below.
   The stock Orchis LNF defaults reference uninstalled Vimix cursors + Tela-circle
   icons, so `scripts/patch-lnf.sh` patches the user-local LNF copies to keep the
   repo's FairyWren icons + Breeze cursors on **every** switch path.
+  KDE 6.7's built-in auto dark/light Global Theme switcher is disabled on each
+  apply (`AutomaticLookAndFeel=false`, `AutomaticLookAndFeelOnIdle=false`) and
+  its `DefaultLight/DarkLookAndFeel` keys are pinned to the Orchis pair so
+  nothing but this switch path can flip themes.
 - **Color scheme:** `Orchis` / `OrchisDark` (installed) via `plasma-apply-colorscheme`.
 - **Icons:** `FairyWren_Light` / `FairyWren_Dark` (installed; the macOS-style icon
   set that belongs to the Orchis ecosystem). The Orchis LNF would fall back to

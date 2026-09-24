@@ -23,10 +23,14 @@ kscreen-doctor -o 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | head -30
 echo "=== running plasma components ==="
 ps -e -o comm= | grep -E '^(plasmashell|kwin_wayland|krunner|kded6)$' | sort -u
 
-echo "=== look-and-feel ==="
+echo "--- look-and-feel ==="
 ls ~/.local/share/plasma/look-and-feel/ 2>/dev/null
 echo "--- active (kdeglobals [KDE] LookAndFeelPackage):"
 kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage 2>/dev/null || echo "(unset)"
+echo "--- auto theme switcher (kdeglobals [KDE]):"
+for _k in AutomaticLookAndFeel AutomaticLookAndFeelOnIdle DefaultLightLookAndFeel DefaultDarkLookAndFeel; do
+  printf '%s=%s\n' "$_k" "$(kreadconfig6 --file kdeglobals --group KDE --key "$_k" 2>/dev/null || echo default)"
+done
 
 echo "=== color scheme ==="
 kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/dev/null || echo "(unset)"
@@ -43,6 +47,8 @@ kreadconfig6 --file kdeglobals --group General --key font 2>/dev/null || echo "(
 
 echo "=== window decoration ==="
 kreadconfig6 --file kwinrc --group General --key decorationTheme 2>/dev/null || echo "(default)"
+kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library 2>/dev/null || echo "(default)"
+kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme 2>/dev/null || echo "(default)"
 echo "available: $(ls ~/.local/share/aurorae/themes/ 2>/dev/null | tr '\n' ' ')"
 
 echo "=== virtual desktops (kwinrc [Desktops]) ==="
