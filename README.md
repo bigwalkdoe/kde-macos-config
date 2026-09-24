@@ -63,9 +63,10 @@ kde-macos-config/
 ├── README.md            this file
 ├── backup.sh            timestamped backup -> ~/.config/kde-backups/
 ├── apply.sh             [--light|--dark] preflight -> backup -> apply -> verify
+├── sync.sh              snapshot live config -> config/ (normalized, git-ready)
 ├── rollback.sh          restore most recent backup + reload desktop
 ├── detect.sh            non-destructive environment inventory
-├── verify.sh            PASS/FAIL verification (files + live session)
+├── verify.sh            PASS/FAIL verification (files + live session + health)
 ├── config/              reference values for every setting this project writes
 ├── scripts/
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
@@ -81,6 +82,8 @@ cd ~/kde-macos-config
 ./apply.sh           # apply the light look
 ./apply.sh --dark    # apply the dark look
 ./verify.sh          # status report
+./sync.sh            # snapshot current live config -> config/ (normalized)
+./sync.sh --commit   # ...and commit it
 ./rollback.sh        # restore the most recent backup
 ```
 

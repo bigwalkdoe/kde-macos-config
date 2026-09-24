@@ -92,6 +92,27 @@ BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
 CHK "timestamped backup exists" "yes" "$([ -n "$BKL" ] && echo yes || echo no)"
 [ -n "$BKL" ] && echo "  latest: $BKL"
 
+echo "--- health (crash-loop + hardware) ---"
+CHK "plasmashell unit active" "active" "$(systemctl --user is-active plasma-plasmashell 2>/dev/null)"
+RECENT="$(
+  journalctl --user -u plasma-plasmashell --since '10 minutes ago' -o cat 2>/dev/null \
+    | grep -cE 'code=dumped|SIGSEGV|Failed to start' || true
+)"
+CHK "no plasmashell crash-loop in last 10 min" "0" "$RECENT"
+INVALID="$(
+  fc-cache -f 2>&1 | grep -c 'invalid cache' || true
+)"
+CHK "no invalid fontconfig caches" "0" "$INVALID"
+FSVERITY="$(
+  journalctl -k --since '24 hours ago' -o cat 2>/dev/null \
+    | grep -cE 'fs-verity.*CORRUPTED|FILE CORRUPTED' || true
+)"
+if [ "$FSVERITY" -gt 0 ]; then
+  echo "WARN  $FSVERITY fs-verity corruption entries in last 24h (likely disk/RAM fault)"
+else
+  echo "PASS  no fs-verity corruption in last 24h"
+fi
+
 echo "=== result ==="
 if [ "$FAILED" -eq 0 ]; then echo "VERIFY: ALL PASS"; else echo "VERIFY: $FAILED FAILURE(S)"; fi
 exit "$FAILED"

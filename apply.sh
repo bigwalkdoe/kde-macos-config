@@ -111,6 +111,27 @@ kwriteconfig6 --file kcminputrc --group Mouse --key cursorSize 24 || die "cursor
 kwriteconfig6 --file kdeglobals --group General --key font "Noto Sans,10,-1,5,50,0,0,0,0,0" || die "font"
 kwriteconfig6 --file ksplashrc --group KSplash --key Theme AppleSplash || die "splash"
 
+say "Fontconfig: rebuild cache + exclude web-only fonts"
+# Rebuild the font cache so a stale/corrupt cache can never take down plasmashell
+# again (it crashed in FcCharSetHasChar during Klipper popup text shaping).
+fc-cache -f >/dev/null 2>&1 || die "fc-cache failed"
+# Exclude the Inter web/woff-hinted subsets: they are redundant duplicates of
+# the same family and are a known fontconfig cache-corruption trigger.
+FCDIR="$HOME/.config/fontconfig"; mkdir -p "$FCDIR"
+cat > "$FCDIR/fonts.conf" <<'EOF'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <selectfont>
+    <rejectfont>
+      <glob>*/Inter/web/*</glob>
+      <glob>*/Inter/extras/woff-hinted/*</glob>
+    </rejectfont>
+  </selectfont>
+</fontconfig>
+EOF
+fc-cache -f >/dev/null 2>&1 || die "fc-cache failed"
+
 say "KWin: window decoration, workspaces, effects"
 kwriteconfig6 --file kwinrc --group General --key decorationTheme Orchis || die "decoration"
 kwriteconfig6 --file kwinrc --group General --key BorderlessMaximizedWindows true || die "borderless"

@@ -1,0 +1,2 @@
+# machine-specific runtime state (absolute paths), re-created by apply.sh
+.applied-*
