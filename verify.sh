@@ -165,6 +165,24 @@ else
   echo "PASS  no fs-verity corruption in last 24h"
 fi
 
+echo "--- reboot persistence ---"
+MRK="$(ls -1t "$ROOT"/.applied-* 2>/dev/null | head -1)"
+CUR_BOOT="$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo none)"
+if [ -n "$MRK" ] && [ -f "$MRK" ]; then
+  APP_BOOT="$(grep '^BOOT=' "$MRK" 2>/dev/null | cut -d= -f2)"
+  APP_BK="$(grep '^APPLIED=' "$MRK" 2>/dev/null | cut -d= -f2)"
+  if [ -n "$APP_BOOT" ] && [ "$APP_BOOT" != "$CUR_BOOT" ]; then
+    echo "PASS  applied by a previous boot: current boot ($CUR_BOOT) differs from apply boot ($APP_BOOT) — settings survived a full reboot"
+  elif [ "$APP_BOOT" = "$CUR_BOOT" ]; then
+    echo "INFO  last apply happened this boot ($CUR_BOOT); reboot persistence confirmed after next login"
+  else
+    echo "SKIP  $MRK has no BOOT= line (marked before this feature)"
+  fi
+  [ -n "$APP_BK" ] && [ -d "$APP_BK" ] && echo "INFO  applied backup on record: $APP_BK"
+else
+  echo "SKIP  no .applied-* marker (apply.sh has not completed yet)"
+fi
+
 echo "=== result ==="
 if [ "$FAILED" -eq 0 ]; then echo "VERIFY: ALL PASS"; else echo "VERIFY: $FAILED FAILURE(S)"; fi
 exit $(( FAILED > 0 ? 1 : 0 ))

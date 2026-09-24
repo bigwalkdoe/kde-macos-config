@@ -8,6 +8,7 @@
 # existing CursorTheme/Font settings it finds in /etc/sddm.conf.d.
 #
 # Usage: sudo ./scripts/install-sddm-orchis.sh   (or plain, it prompts for sudo)
+#        ./scripts/install-sddm-orchis.sh --force  bypass the fast-exit and reinstall
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Stage under the invoking (human) user even though this script runs as root.
@@ -28,6 +29,35 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 command -v git >/dev/null || { echo "FAIL: git required" >&2; exit 1; }
+
+say "Short-circuit: already installed?"
+FORCE=no
+for arg in "$@"; do
+  case "$arg" in
+    --force|-f) FORCE=yes ;;
+  esac
+done
+INSTALLED_OK=no
+if [ "$FORCE" = "no" ] && [ -d "$THEME_DIR/$NAME" ] && [ -f "$THEME_DIR/$NAME/metadata.desktop" ] \
+   && grep -q "^Name=$NAME$" "$THEME_DIR/$NAME/metadata.desktop" \
+   && [ -f "$CONF" ] && grep -q "^Current=$NAME$" "$CONF" \
+   && grep -q "^CursorTheme=" "$CONF" && grep -q "^Font=" "$CONF"; then
+  INSTALLED_OK=yes
+fi
+if [ "$INSTALLED_OK" = "yes" ]; then
+  echo
+  echo "Already installed and configured ($THEME_DIR/$NAME, $CONF -> $NAME)."
+  echo "Nothing to do — skipping clone/install. Use --force to reinstall."
+  echo
+  echo "Greeter status:"
+  grep -q "^Current=$NAME$" "$CONF" && echo "  PASS  Current=$NAME"
+  grep -q "^CursorTheme=" "$CONF" && echo "  PASS  CursorTheme=$(grep '^CursorTheme=' "$CONF" | cut -d= -f2)"
+  grep -q "^Font=" "$CONF" && echo "  PASS  Font=$(grep '^Font=' "$CONF" | cut -d= -f2-)"
+  echo
+  echo "Preview without logging out:"
+  echo "  sddm-greeter-qt6 --test-mode --theme $THEME_DIR/$NAME &"
+  exit 0
+fi
 
 say "Stage Orchis SDDM theme (6.0 / Qt6)"
 if [ -d "$STAGE/$NAME" ]; then

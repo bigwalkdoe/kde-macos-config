@@ -75,7 +75,7 @@ kde-macos-config/
 │   ├── install-sddm-orchis.sh  (sudo) installs the Orchis login theme
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
 │   └── tray-config.js   system tray curation (pinned items + order)
-└── screenshots/         captured after apply (if tooling available)
+└── screenshots/         captured after apply (desktop-dual-YYYYMMDD.png)
 ```
 
 ## 4. Quick start
@@ -216,11 +216,15 @@ identically.
 - **Login screen (SDDM):** not customized by `apply.sh` — it requires root
   (`/usr/share/sddm/themes`, `/etc/sddm.conf.d/`). Install the Orchis login
   theme explicitly (one-time, idempotent, preserves your cursor/font settings):
-  `sudo ./scripts/install-sddm-orchis.sh`. Preview without logging out:
+  `sudo ./scripts/install-sddm-orchis.sh`. The installer exits immediately if
+  the theme is already present and configured; pass `--force` to re-clone and
+  reinstall anyway. Preview without logging out:
   `sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/Orchis &`.
-- **Reboot persistence:** apply.sh verifies persistence across a full
-  plasmashell reload (equivalent to a session reload). A full `reboot` check is
-  a manual step — run `./verify.sh` after the next login.
+- **Reboot persistence:** verify.sh records the boot ID when apply.sh succeeds
+  (`.applied-light`/`.applied-dark`). On a later run it reports **PASS** if the
+  system has since rebooted (settings survived a full reboot), or an INFO hint
+  when verification happens in the same boot — a full `reboot` check is still a
+  manual step the first time, then automated from then on.
 - **Modelink:** it is a development project (`~/dev/github/modelink-*`), not an
   installed application, so no dock entry is created. To pin it: add a
   `~/.local/share/applications/modelink.desktop` and extend the `launchers` list
@@ -235,7 +239,8 @@ pager) · dock (launcher, icontasks, trash, floating, fit-to-content) · exactly
 two panels · kwin (Orchis decoration, 4 desktops, blur on, wobbly off) · theme
 (LNF, colors, icons, cursor, font) · GTK wiring · backup present. SDDM login
 theme reports PASS when installed (`verify.sh` SKIPs it otherwise — it is an
-optional, separately-installed step).
+optional, separately-installed step). Reboot persistence auto-detects whether
+the running settings survived a reboot since the last apply.
 
 Manual checks after apply: global menu shows app menus (File/Edit/View…),
 tray icon actions work, clock updates, pinned dock apps launch, running apps

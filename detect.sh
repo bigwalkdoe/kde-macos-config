@@ -29,7 +29,6 @@ echo "--- active (kdeglobals [KDE] LookAndFeelPackage):"
 kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage 2>/dev/null || echo "(unset)"
 
 echo "=== color scheme ==="
-ls ~/.local/share/color-schemes/ 2>/dev/null | grep -v '\.colors$' >/dev/null 2>&1
 kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/dev/null || echo "(unset)"
 
 echo "=== icons ==="
@@ -54,7 +53,7 @@ echo "=== panels (read-only plasmashell probe) ==="
 cat > /tmp/kde-macos-probe.js <<'EOF'
 var log = [];
 var ids = panelIds.slice();
-log.push("panelCount= + ids.length);
+log.push("panelCount=" + ids.length);
 for (var i = 0; i < ids.length; i++) {
     var p = panelById(ids[i]);
     if (!p) { continue; }

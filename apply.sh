@@ -250,7 +250,10 @@ sleep 3
 bash "$ROOT/verify.sh" || FAIL=1
 
 if [ "$FAIL" -eq 0 ]; then
-  echo "APPLIED=$BACKUP" > "$ROOT/.applied-$SFX"
+  {
+    echo "APPLIED=$BACKUP"
+    echo "BOOT=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)"
+  } > "$ROOT/.applied-$SFX"
   say "DONE — configuration applied and verified."
   echo "Backup : $BACKUP"
   echo "Rollback: $ROOT/rollback.sh"
