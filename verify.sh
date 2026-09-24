@@ -113,6 +113,37 @@ BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
 CHK "timestamped backup exists" "yes" "$([ -n "$BKL" ] && echo yes || echo no)"
 [ -n "$BKL" ] && echo "  latest: $BKL"
 
+echo "--- sddm-login (optional extra; install: sudo ./scripts/install-sddm-orchis.sh) ---"
+SDDM_THEME="/usr/share/sddm/themes/Orchis"
+SDDM_CONF="/etc/sddm.conf.d/theme.conf"
+if [ -d "$SDDM_THEME" ] && [ -f "$SDDM_CONF" ]; then
+  CHK "sddm theme installed (metadata Name=Orchis)" "yes" \
+    "$([ -f "$SDDM_THEME/metadata.desktop" ] && grep -q '^Name=Orchis$' "$SDDM_THEME/metadata.desktop" && echo yes || echo no)"
+  CHK "sddm greeter config -> current=Orchis" "Orchis" \
+    "$(sed -n 's/^Current=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm cursor preserved (not empty)" "yes" \
+    "$([ -n "$(sed -n 's/^CursorTheme=//p' "$SDDM_CONF")" ] && echo yes || echo no)"
+  CHK "sddm font preserved (not empty)" "yes" \
+    "$([ -n "$(sed -n 's/^Font=//p' "$SDDM_CONF")" ] && echo yes || echo no)"
+  if command -v sddm-greeter-qt6 >/dev/null && [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
+    timeout 5 sddm-greeter-qt6 --test-mode --theme "$SDDM_THEME" &>/dev/null &
+    SPID=$!
+    sleep 3
+    if kill -0 "$SPID" 2>/dev/null; then
+      echo "PASS  sddm greeter smoke test (alive after 3s)"
+      kill "$SPID" 2>/dev/null; wait "$SPID" 2>/dev/null
+    else
+      RC=0; wait "$SPID" 2>/dev/null || RC=$?
+      echo "FAIL  sddm greeter smoke test (exited early, rc=$RC)"
+      FAILED=$((FAILED+1))
+    fi
+  else
+    echo "SKIP  sddm greeter smoke test (no sddm-greeter-qt6 or no display)"
+  fi
+else
+  echo "SKIP  SDDM login theme not installed (optional: sudo ./scripts/install-sddm-orchis.sh)"
+fi
+
 echo "--- health (crash-loop + hardware) ---"
 CHK "plasmashell unit active" "active" "$(systemctl --user is-active plasma-plasmashell 2>/dev/null)"
 RECENT="$(

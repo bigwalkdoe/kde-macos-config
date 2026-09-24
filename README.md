@@ -233,7 +233,9 @@ identically.
 Desktop (clean containment, wallpaper) · top bar (global menu, tray, clock,
 pager) · dock (launcher, icontasks, trash, floating, fit-to-content) · exactly
 two panels · kwin (Orchis decoration, 4 desktops, blur on, wobbly off) · theme
-(LNF, colors, icons, cursor, font) · GTK wiring · backup present.
+(LNF, colors, icons, cursor, font) · GTK wiring · backup present. SDDM login
+theme reports PASS when installed (`verify.sh` SKIPs it otherwise — it is an
+optional, separately-installed step).
 
 Manual checks after apply: global menu shows app menus (File/Edit/View…),
 tray icon actions work, clock updates, pinned dock apps launch, running apps
