@@ -1,5 +1,11 @@
-# kcminputrc keys — written by apply.sh (kwriteconfig6, merged; all libinput tuning preserved)
+[Libinput][2][10][TPPS/2 ALPS TrackPoint]
+PointerAcceleration=0.000
+ScrollFactor=1
+
+[Libinput][2][7][SynPS/2 Synaptics TouchPad]
+NaturalScroll=true
+PointerAcceleration=0.000
+ScrollFactor=1
 
 [Mouse]
-cursorTheme=Breeze_Light
 cursorSize=24
