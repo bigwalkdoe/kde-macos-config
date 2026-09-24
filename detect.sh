@@ -71,4 +71,19 @@ grep -E 'gtk-theme-name|gtk-icon-theme-name|gtk-cursor-theme-name' ~/.config/gtk
 echo "=== backup dirs ==="
 ls -1dt ~/.config/kde-backups/*/ 2>/dev/null | head -5
 
+echo "--- drift check ---"
+_EXP_LNF_LIGHT="com.github.vinceliuice.Orchis"
+_EXP_LNF_DARK="com.github.vinceliuice.Orchis-dark"
+_LNF_PKG="$(kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage 2>/dev/null || echo)"
+_A1="$(kreadconfig6 --file kdeglobals --group KDE --key AutomaticLookAndFeel 2>/dev/null || echo)"
+_A2="$(kreadconfig6 --file kdeglobals --group KDE --key AutomaticLookAndFeelOnIdle 2>/dev/null || echo)"
+case "$_LNF_PKG" in
+  "$_EXP_LNF_LIGHT"|"$_EXP_LNF_DARK") ;;
+  *) echo "WARN  LookAndFeelPackage=$_LNF_PKG (expected Orchis pair) — run ./apply.sh --light|--dark" ;;
+esac
+case "$_A1/$_A2" in
+  false/false) ;;
+  *) echo "WARN  autoswitcher keys not disabled (AutomaticLookAndFeel=$_A1 AutomaticLookAndFeelOnIdle=$_A2)" ;;
+esac
+
 echo "=== done ==="

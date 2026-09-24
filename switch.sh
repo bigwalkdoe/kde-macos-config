@@ -27,12 +27,17 @@ desired_mode() {
 }
 
 current_mode() {
-  local ico
+  local ico lnf
   ico="$(kreadconfig6 --file kdeglobals --group Icons --key Theme 2>/dev/null || echo)"
+  lnf="$(kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage 2>/dev/null || echo)"
   case "$ico" in
-    FairyWren_Dark) echo dark ;;
+    FairyWren_Dark)  echo dark ;;
     FairyWren_Light) echo light ;;
-    *) echo "unknown($ico)" ;;
+    *) case "$lnf" in
+         com.github.vinceliuice.Orchis-dark) echo dark ;;
+         com.github.vinceliuice.Orchis)     echo light ;;
+         *) echo "unknown($ico/$lnf)" ;;
+       esac ;;
   esac
 }
 
