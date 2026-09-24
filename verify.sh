@@ -5,21 +5,21 @@ set -u
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 CFG="$HOME/.config"
 FAILED=0
-CHK(){ if [ "$3" = "$2" ]; then echo "PASS  $1"; else echo "FAIL  $1  (expected '$2', got '$3')"; FAILED=1; fi; }
+CHK(){ if [ "$3" = "$2" ]; then echo "PASS  $1"; else echo "FAIL  $1  (expected '$2', got '$3')"; FAILED=$((FAILED+1)); fi; }
 # range check for values that Plasma snaps (e.g. panel heights); usage: CHKR <label> <min> <max> <value>
-CHKR(){ if [ "$4" -ge "$2" ] 2>/dev/null && [ "$4" -le "$3" ] 2>/dev/null; then echo "PASS  $1 ($4)"; else echo "FAIL  $1  (expected $2..$3, got '$4')"; FAILED=1; fi; }
+CHKR(){ if [ "$4" -ge "$2" ] 2>/dev/null && [ "$4" -le "$3" ] 2>/dev/null; then echo "PASS  $1 ($4)"; else echo "FAIL  $1  (expected $2..$3, got '$4')"; FAILED=$((FAILED+1)); fi; }
 q(){ kreadconfig6 --file "$1" --group "$2" --key "$3" 2>/dev/null || echo "(unset)"; }
 
 echo "=== kde-macos-config: verification ==="
 echo "Plasma: $(plasmashell --version 2>/dev/null)"
 
 echo "--- desktop ---"
-CHK "clean desktop containment (no icons)" "1" \
-  "$(grep -c '^plugin=org.kde.desktopcontainment' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
-CHK "no folder-view desktop remaining" "0" \
-  "$(grep -c '^plugin=org.kde.plasma.folder' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
-CHK "wallpaper configured on desktop" "1" \
-  "$(grep -c 'wavy_lines_v01_5120x2880.png' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+FV="$(grep -c '^plugin=org.kde.plasma.folder' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+CHK "no folder-view desktop remaining" "0" "$FV"
+DC="$(grep -c '^plugin=org.kde.desktopcontainment' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+CHKR "clean desktop containment on every screen (>=1)" "1" "32" "$DC"
+WALL="$(grep -c 'wavy_lines_v01_5120x2880.png' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+CHKR "wallpaper configured on every screen (>=1)" "1" "32" "$WALL"
 
 echo "--- panels (live) ---"
 cat > /tmp/kde-macos-verify.js <<EOF
@@ -115,4 +115,4 @@ fi
 
 echo "=== result ==="
 if [ "$FAILED" -eq 0 ]; then echo "VERIFY: ALL PASS"; else echo "VERIFY: $FAILED FAILURE(S)"; fi
-exit "$FAILED"
+exit $(( FAILED > 0 ? 1 : 0 ))
