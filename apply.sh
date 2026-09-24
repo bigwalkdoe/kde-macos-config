@@ -38,6 +38,14 @@ restore_backup(){
       rm -f "$HOME/.config/$f"
     fi
   done
+  # Undo the LNF defaults patch this apply may have already written.
+  LNFD="$HOME/.local/share/plasma/look-and-feel"
+  for l in com.github.vinceliuice.Orchis com.github.vinceliuice.Orchis-dark; do
+    if [ -f "$BACKUP/lnf/$l/contents/defaults" ]; then
+      mkdir -p "$LNFD/$l/contents"
+      cp -a "$BACKUP/lnf/$l/contents/defaults" "$LNFD/$l/contents/"
+    fi
+  done
   start_shell || true
   say "Rollback complete - previous configuration restored."
 }

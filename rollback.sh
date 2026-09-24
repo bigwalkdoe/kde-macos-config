@@ -44,6 +44,18 @@ for f in "${AFFECTED[@]}"; do
   fi
 done
 
+# Restore the pristine (pre-apply) Orchis LNF defaults that scripts/patch-lnf.sh
+# rewrites, so rollback is the exact inverse of apply even for the look-and-feel
+# shadows living outside ~/.config.
+LNFD="$HOME/.local/share/plasma/look-and-feel"
+for l in com.github.vinceliuice.Orchis com.github.vinceliuice.Orchis-dark; do
+  if [ -f "$BK/lnf/$l/contents/defaults" ]; then
+    mkdir -p "$LNFD/$l/contents"
+    cp -a "$BK/lnf/$l/contents/defaults" "$LNFD/$l/contents/"
+    echo "restored LNF defaults: $l"
+  fi
+done
+
 busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure 2>/dev/null || true
 
 systemctl --user reset-failed plasma-plasmashell.service 2>/dev/null || true

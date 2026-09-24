@@ -39,6 +39,16 @@ for g in gtk-3.0 gtk-4.0; do
   fi
 done
 
+# Pristine look-and-feel defaults (snapshotted BEFORE apply.sh runs the LNF
+# patch, so this is the exact undo for rollback.sh).
+LNFD="$HOME/.local/share/plasma/look-and-feel"
+for l in com.github.vinceliuice.Orchis com.github.vinceliuice.Orchis-dark; do
+  if [ -f "$LNFD/$l/contents/defaults" ]; then
+    mkdir -p "$BK/lnf/$l/contents"
+    cp -a "$LNFD/$l/contents/defaults" "$BK/lnf/$l/contents/"
+  fi
+done
+
 # Self-verification: the critical files must have landed.
 CRITICAL=("$BK/plasma-org.kde.plasma.desktop-appletsrc" "$BK/plasmashellrc" "$BK/kdeglobals" "$BK/kwinrc")
 for c in "${CRITICAL[@]}"; do

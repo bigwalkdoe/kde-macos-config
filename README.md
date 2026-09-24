@@ -54,7 +54,7 @@ a polished **macOS-inspired** workflow while staying 100% native to KDE Plasma.
 - **Backup before touch, always.** Every apply creates a timestamped backup
   under `~/.config/kde-backups/` and restores it automatically on failure.
 - **User-level only.** No system files are touched. (The login screen SDDM theme
-  is *not* changed because that requires root; see §9.)
+  is *not* changed because that requires root; see §10.)
 
 ## 3. Repository layout
 
@@ -63,12 +63,14 @@ kde-macos-config/
 ├── README.md            this file
 ├── backup.sh            timestamped backup -> ~/.config/kde-backups/
 ├── apply.sh             [--light|--dark] preflight -> backup -> apply -> verify
+├── switch.sh            automatic dark/light switching (systemd user timer)
 ├── sync.sh              snapshot live config -> config/ (normalized, git-ready)
 ├── rollback.sh          restore most recent backup + reload desktop
 ├── detect.sh            non-destructive environment inventory
 ├── verify.sh            PASS/FAIL verification (files + live session + health)
 ├── config/              reference values for every setting this project writes
 ├── scripts/
+│   ├── patch-lnf.sh     pins icons/cursor into user-local Orchis LNF defaults
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
 │   └── tray-config.js   system tray curation (pinned items + order)
 └── screenshots/         captured after apply (if tooling available)
@@ -85,6 +87,9 @@ cd ~/kde-macos-config
 ./sync.sh            # snapshot current live config -> config/ (normalized)
 ./sync.sh --commit   # ...and commit it
 ./rollback.sh        # restore the most recent backup
+./switch.sh --install       # set up automatic dark/light switching
+./switch.sh --check         # print desired vs current mode
+./switch.sh --auto          # switch mode if the clock crossed a boundary
 
 # Dark/light switching is safe in any of these forms:
 #   ./apply.sh --light | --dark   (run this repo; preferred)
@@ -179,8 +184,32 @@ after apply (Firefox `F11`, Chrome `F11`, maximized windows, video fullscreen).
   automatically (fail-safe).
 - `./rollback.sh` restores the **most recent** backup — no manual bookkeeping.
 - Re-applying is safe: the layout script is idempotent.
+- Backups also snapshot the pristine user-local Orchis LNF defaults (the files
+  `scripts/patch-lnf.sh` rewrites), so `rollback.sh` and apply.sh's automatic
+  fail-safe both restore them fully.
 
-## 9. Known limitations
+## 9. Automatic dark/light switching (`./switch.sh`)
+
+`switch.sh` flips the theme on a daily schedule using a systemd **user** timer —
+no cron, no root:
+
+- `./switch.sh --install`  — creates `kde-macos-switch.{service,timer}` under
+  `~/.config/systemd/user/` and enables it. The timer fires 2 min after login,
+  then every 15 min; the service runs `switch.sh --auto`, which only applies when
+  the clock has actually crossed a boundary (so it is a no-op otherwise).
+- `./switch.sh --check` — prints desired vs current mode without changing anything.
+- `./switch.sh --auto` — applies dark/light if it differs from the current mode.
+- Times default to sunrise/sunset (`06:30` / `19:30`). Override per machine in
+  `~/.config/kde-macos/switch.conf`:
+  `SUNRISE=07:00` / `SUNSET=20:00`.
+- `./switch.sh --light|--dark` — explicit manual switch (same as `apply.sh`).
+- `./switch.sh --uninstall` — disables the timer and removes the unit files.
+
+Note: the schedule drives `apply.sh`, which already guarantees icons/cursor stay
+pinned (see scripts/patch-lnf.sh), so both automatic and manual switching behave
+identically.
+
+## 10. Known limitations
 
 - **Login screen (SDDM):** not customized — requires root
   (`/etc/sddm.conf.d/`), and this project intentionally never touches system
@@ -196,7 +225,7 @@ after apply (Firefox `F11`, Chrome `F11`, maximized windows, video fullscreen).
 - **GTK light theme:** installed Orchis GTK themes are dark-only, so light mode
   maps GTK apps to native `Breeze`. Firefox/Chrome/VSCode draw their own UI.
 
-## 10. Verification checklist (`./verify.sh`)
+## 11. Verification checklist (`./verify.sh`)
 
 Desktop (clean containment, wallpaper) · top bar (global menu, tray, clock,
 pager) · dock (launcher, icontasks, trash, floating, fit-to-content) · exactly
