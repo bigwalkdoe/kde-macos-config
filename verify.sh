@@ -51,7 +51,7 @@ CHKR "top bar height 24..44px (target ~30)" "24" "44" "$TPH"
 CHKR "dock height 44..66px (target ~52)" "44" "66" "$DPH"
 
 echo "--- kwin ---"
-CHK "window decoration = Orchis" "Orchis" "$(q kwinrc General decorationTheme)"
+CHK "kwin decoration library = aurorae" "org.kde.kwin.aurorae" "$(q kwinrc org.kde.kdecoration2 library)"
 CHK "virtual desktops = 4" "4" "$(q kwinrc Desktops Number)"
 CHK "desktop rows = 1" "1" "$(q kwinrc Desktops Rows)"
 CHK "wobbly windows off" "false" "$(q kwinrc Plugins wobblywindowsEnabled)"
@@ -65,11 +65,15 @@ Q(){ q plasmarc Theme name; }
 LNF="$(Q)"
 SUPPORTED="no"
 case "$LNF" in
-  Orchis)      SUPPORTED="yes"; EXP_COLOR=Orchis;     EXP_ICONS=FairyWren_Light; EXP_CURSOR=Breeze_Light;  EXP_GTK=Breeze; ;;
-  Orchis-dark) SUPPORTED="yes"; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=breeze_cursors; EXP_GTK=Orchis-Dark; ;;
-  *) EXP_COLOR="($LNF)"; EXP_ICONS="($LNF)"; EXP_CURSOR="($LNF)"; EXP_GTK="($LNF)"; echo "note: unknown look-and-feel '$LNF' (expected Orchis or Orchis-dark)"; ;;
+  Orchis)      SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis;      EXP_COLOR=Orchis;     EXP_ICONS=FairyWren_Light; EXP_CURSOR=Breeze_Light;  EXP_GTK=Breeze;       EXP_DECO=__aurorae__svg__Orchis ;;
+  Orchis-dark) SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis-dark; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=breeze_cursors; EXP_GTK=Orchis-Dark; EXP_DECO=__aurorae__svg__Orchis-dark ;;
+  *) EXP_LNF="($LNF)"; EXP_COLOR="($LNF)"; EXP_ICONS="($LNF)"; EXP_CURSOR="($LNF)"; EXP_GTK="($LNF)"; EXP_DECO="($LNF)"; echo "note: unknown look-and-feel '$LNF' (expected Orchis or Orchis-dark)"; ;;
 esac
 CHK "look-and-feel is a supported mode" "yes" "$SUPPORTED"
+CHK "global theme package" "$EXP_LNF" "$(q kdeglobals KDE LookAndFeelPackage)"
+CHK "auto theme switching off" "false" "$(q kdeglobals KDE AutomaticLookAndFeel)"
+CHK "auto theme switching on idle off" "false" "$(q kdeglobals KDE AutomaticLookAndFeelOnIdle)"
+CHK "kwin decoration theme" "$EXP_DECO" "$(q kwinrc org.kde.kdecoration2 theme)"
 CHK "color scheme ($LNF)" "$EXP_COLOR" "$(q kdeglobals General ColorScheme)"
 CHK "icons ($LNF)" "$EXP_ICONS" "$(q kdeglobals Icons Theme)"
 CHK "cursor ($LNF)" "$EXP_CURSOR" "$(q kcminputrc Mouse cursorTheme)"

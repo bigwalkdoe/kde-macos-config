@@ -11,8 +11,8 @@ ROOT="$(cd "$(dirname "$0")" && pwd)" && cd "$ROOT" || exit 1
 
 MODE="${1:---light}"
 case "$MODE" in
-  --light) LNF=Orchis;         COLORS=Orchis;      ICONS=FairyWren_Light; CURSOR=Breeze_Light;   SFX="light" ;;
-  --dark)  LNF=Orchis-dark;    COLORS=OrchisDark;  ICONS=FairyWren_Dark;  CURSOR=breeze_cursors; SFX="dark" ;;
+  --light) LNF=Orchis;         LNF_PKG="com.github.vinceliuice.Orchis";       COLORS=Orchis;      ICONS=FairyWren_Light; CURSOR=Breeze_Light;   SFX="light" ;;
+  --dark)  LNF=Orchis-dark;    LNF_PKG="com.github.vinceliuice.Orchis-dark";  COLORS=OrchisDark;  ICONS=FairyWren_Dark;  CURSOR=breeze_cursors; SFX="dark" ;;
   *) echo "usage: $0 [--light|--dark]"; exit 2 ;;
 esac
 WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
@@ -99,7 +99,7 @@ trap 'if [ "$FAIL" -ne 0 ]; then restore_backup; fi; exit $FAIL' EXIT
 
 say "Preflight"
 command -v plasmashell >/dev/null || die "plasmashell not found - not a Plasma session"
-command -v kwriteconfig6 plasma-apply-colorscheme plasma-apply-desktoptheme plasma-apply-wallpaperimage >/dev/null || die "missing plasma tooling"
+command -v kwriteconfig6 plasma-apply-colorscheme plasma-apply-desktoptheme plasma-apply-lookandfeel plasma-apply-wallpaperimage >/dev/null || die "missing plasma tooling"
 command -v gdbus >/dev/null && command -v busctl >/dev/null && command -v uuidgen >/dev/null || die "missing dbus tooling"
 plasmashell --version | grep -q '^plasmashell 6\.' || die "unsupported Plasma version (need 6.x)"
 busctl --user list --no-pager 2>/dev/null | grep -q org.kde.plasmashell || die "plasmashell not on the session bus"
@@ -110,13 +110,28 @@ BACKUP="$(bash "$ROOT/backup.sh" | grep '^BackUp=' | cut -d= -f2-)"
 [ -d "$BACKUP" ] || die "backup failed"
 echo "Backup directory: $BACKUP"; sleep 1
 
-say "Look-and-feel: $LNF"
-# Patch user-local Orchis LNF defaults FIRST, so any switch path (this script,
-# System Settings Global Theme, lookandfeeltool) applies the repo's icons/cursor
-# instead of the missing Vimix cursor + Tela-circle icons they ship with.
+say "Look-and-feel: $LNF ($LNF_PKG)"
+# Patch user-local Orchis LNF defaults FIRST, so applying the Global Theme
+# (plasma-apply-lookandfeel) uses the repo's icons/cursor ...
 bash "$ROOT/scripts/patch-lnf.sh" || die "LNF patch failed"
+# Apply the FULL Global Theme — the only call KDE recognizes as changing
+# the look-and-feel.  It records kdeglobals [KDE] LookAndFeelPackage and
+# applies the patched defaults (icons/cursor/kwin aurorae decoration/
+# kvantum widgets).  plasma-apply-desktoptheme alone left LookAndFeelPackage
+# stale, so the built-in lookandfeelautoswitcher kept snapping back to
+# breeze/breezedark snapshots (Breeze icon shapes/outlines).
+plasma-apply-lookandfeel -a "$LNF_PKG" || die "plasma-apply-lookandfeel failed"
 plasma-apply-desktoptheme "$LNF"  || die "plasma-apply-desktoptheme failed"
 plasma-apply-colorscheme "$COLORS" || die "plasma-apply-colorscheme failed"
+# Disarm KDE 6.7's built-in auto dark/light theme switcher (kded module
+# lookandfeelautoswitcher applies DefaultDark/LightLookAndFeel on idle +
+# schedule boundaries). Pin defaults at the Orchis pair so even a manual
+# re-enable can never land on stock Breeze.
+for _k in AutomaticLookAndFeel AutomaticLookAndFeelOnIdle; do
+  kwriteconfig6 --file kdeglobals --group KDE --key "$_k" false || die "$_k"
+done
+kwriteconfig6 --file kdeglobals --group KDE --key DefaultLightLookAndFeel  com.github.vinceliuice.Orchis       || die "DefaultLightLookAndFeel"
+kwriteconfig6 --file kdeglobals --group KDE --key DefaultDarkLookAndFeel  com.github.vinceliuice.Orchis-dark || die "DefaultDarkLookAndFeel"
 
 say "Icons, cursor, fonts"
 kwriteconfig6 --file kdeglobals --group Icons --key Theme "$ICONS" || die "icons"
@@ -147,7 +162,12 @@ EOF
 fc-cache -f >/dev/null 2>&1 || die "fc-cache failed"
 
 say "KWin: window decoration, workspaces, effects"
-kwriteconfig6 --file kwinrc --group General --key decorationTheme Orchis || die "decoration"
+case "$SFX" in
+  dark) DECO=__aurorae__svg__Orchis-dark ;;
+  *)    DECO=__aurorae__svg__Orchis ;;
+esac
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.kwin.aurorae || die "kwin decoration library"
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme "$DECO" || die "kwin decoration theme"
 kwriteconfig6 --file kwinrc --group General --key BorderlessMaximizedWindows true || die "borderless"
 kwriteconfig6 --file kwinrc --group Desktops --key Number 4 || die "desktops number"
 kwriteconfig6 --file kwinrc --group Desktops --key Rows 1 || die "desktops rows"
