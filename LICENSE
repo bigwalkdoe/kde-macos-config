@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 bigwalkdoe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+THIRD-PARTY ASSETS — READ THIS BEFORE REDISTRIBUTING
+---------------------------------------------------------------------------
+
+The MIT terms above cover the scripts, JavaScript, and documentation in this
+repository.
+
+They do NOT cover `assets/wallpapers/wavy_lines_v01_5120x2880.png`, which is
+vendored here for convenience. That file carries no embedded provenance or
+copyright metadata, so its origin and license could not be established. It is
+therefore provided "as is", with no license granted by the author, and you
+should confirm its status before redistributing this repository.
+
+Everything else this project *uses* is not bundled here and keeps its own
+license: the Orchis look-and-feel/color schemes, the FairyWren icon themes, the
+Bibata cursor theme, and the Orchis SDDM login theme are obtained from their
+upstream packages or cloned at install time by
+`scripts/install-sddm-orchis.sh`. See those projects for their terms (Orchis is
+GPL-3.0).
