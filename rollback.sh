@@ -3,7 +3,12 @@
 # Restores the most recent timestamped backup and reloads the desktop shell.
 # No manual bookkeeping needed: backups are chronological directories under
 # ~/.config/kde-backups/YYYYmmdd-HHMMSS/.
+#
+# The restore itself lives in scripts/restore-backup.sh, which is the single
+# implementation shared with apply.sh's automatic fail-safe. This script only
+# picks the backup.
 set -euo pipefail
+ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 BK="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
 if [ -z "$BK" ]; then
@@ -11,58 +16,7 @@ if [ -z "$BK" ]; then
   exit 1
 fi
 
-echo "Restoring from: $BK"
-systemctl --user stop plasma-plasmashell.service 2>/dev/null || true
-pkill -9 -x plasmashell 2>/dev/null || true
-for _ in $(seq 1 20); do
-  # exact-name match: org.kde.plasmashell.accentColor (kded6) must NOT count
-  busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' || break
-  sleep 1
-done
-
-if [ -d "$BK/gtk-3.0" ]; then
-  mkdir -p "$HOME/.config/gtk-3.0"
-  cp -a "$BK/gtk-3.0/settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
-fi
-if [ -d "$BK/gtk-4.0" ]; then
-  mkdir -p "$HOME/.config/gtk-4.0"
-  cp -a "$BK/gtk-4.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
-fi
-
-# Restore: files present in the backup are copied back; files that were absent
-# when the backup was taken are removed, so the restore is exactly reversible.
-AFFECTED=(
-  plasma-org.kde.plasma.desktop-appletsrc plasmarc plasmashellrc kdeglobals kwinrc
-  kglobalshortcutsrc kcminputrc ksplashrc dolphinrc gwenviewrc kwinrulesrc
-  kwinoutputconfig.json plasma-localerc
-)
-for f in "${AFFECTED[@]}"; do
-  if [ -f "$BK/$f" ]; then
-    cp -a "$BK/$f" "$HOME/.config/" 2>/dev/null || true
-  else
-    rm -f "$HOME/.config/$f"
-  fi
-done
-
-# Restore the pristine (pre-apply) Orchis LNF defaults that scripts/patch-lnf.sh
-# rewrites, so rollback is the exact inverse of apply even for the look-and-feel
-# shadows living outside ~/.config.
-LNFD="$HOME/.local/share/plasma/look-and-feel"
-for l in com.github.vinceliuice.Orchis com.github.vinceliuice.Orchis-dark; do
-  if [ -f "$BK/lnf/$l/contents/defaults" ]; then
-    mkdir -p "$LNFD/$l/contents"
-    cp -a "$BK/lnf/$l/contents/defaults" "$LNFD/$l/contents/"
-    echo "restored LNF defaults: $l"
-  fi
-done
-
-busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure 2>/dev/null || true
-
-systemctl --user reset-failed plasma-plasmashell.service 2>/dev/null || true
-systemctl --user start plasma-plasmashell.service 2>/dev/null || { ( setsid nohup plasmashell >/dev/null 2>&1 & ) || true; }
-for _ in $(seq 1 30); do
-  busctl --user list --no-pager 2>/dev/null | grep -q '^org\.kde\.plasmashell[[:space:]]' && break
-  sleep 1
-done
-
-echo "Rollback complete — desktop reloading with the previous configuration."
+# shellcheck source=scripts/restore-backup.sh
+. "$ROOT/scripts/restore-backup.sh"
+restore_backup "$BK"
+echo "Rollback complete — desktop reloaded with the previous configuration."

@@ -11,8 +11,16 @@
 #
 # This script patches the USER-LEVEL copy (~/.local/share/plasma/look-and-feel/)
 # so any apply path keeps the repo's chosen assets. System files are untouched.
+#
+# It also normalizes the window-decoration plugin id. Aurorae installs two
+# plugins side by side (org.kde.kwin.aurorae.so and org.kde.kwin.aurorae.v2.so,
+# each registering its own id, aurorae 6.7.5); the packaged Orchis LNF defaults
+# declare the v1 id while the live session runs the v2 one. Left unpatched,
+# applying this LNF from System Settings / plasma-apply-lookandfeel would switch
+# the session to the other plugin.
 set -euo pipefail
 CFG_DIR="$HOME/.local/share/plasma/look-and-feel"
+AURORAE_LIB="org.kde.kwin.aurorae.v2"
 
 ld() { # ld <asset-type> <name>: print 1 if a user-local LNF dir exists
   [ -d "$CFG_DIR/$1" ]
@@ -23,7 +31,8 @@ patch_defaults() { # patch_defaults <lnf-dir> <cursor> <icons>
   [ -f "$f" ] || { echo "skip: $f missing"; return 0; }
   sed -i "s/^cursorTheme=.*/cursorTheme=$cur/" "$f"
   sed -i "s|^Theme=Tela-circle.*|Theme=$ico|" "$f"
-  echo "patched $(basename "$lnf") -> cursor=$cur icons=$ico"
+  sed -i "s|^library=org\.kde\.kwin\.aurorae$|library=$AURORAE_LIB|" "$f"
+  echo "patched $(basename "$lnf") -> cursor=$cur icons=$ico decoration=$AURORAE_LIB"
 }
 
 say() { echo "### $*"; }
@@ -45,5 +54,5 @@ for l in \
   fi
   patch_defaults "$1" "$2" "$3"
 done
-echo "=== resulting defaults (icons/cursor lines) ==="
-grep -rE "^cursorTheme=|^Theme=" "$CFG_DIR"/com.github.vinceliuice.Orchis*/contents/defaults 2>/dev/null || echo "none"
+echo "=== resulting defaults (icons/cursor/decoration lines) ==="
+grep -rE "^cursorTheme=|^Theme=|^library=" "$CFG_DIR"/com.github.vinceliuice.Orchis*/contents/defaults 2>/dev/null || echo "none"

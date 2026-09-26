@@ -34,7 +34,8 @@ CHK "exactly two panels (no duplicates)" "2" "${CNT:-not-found}"
 
 TP="$(printf '%s\n' "$PROBE" | grep '^top;' | tr -d '\n')"
 DP="$(printf '%s\n' "$PROBE" | grep '^bottom;' | tr -d '\n')"
-CHK "top menu bar present"  "1" "$(printf '%s' "$TP" | grep -c 'org.kde.plasma.appmenu')"
+CHK "top bar found"          "1" "$([ -n "$TP" ] && echo 1 || echo 0)"
+CHK "dock found"             "1" "$([ -n "$DP" ] && echo 1 || echo 0)"
 CHK "global menu in top bar" "1" "$(printf '%s' "$TP" | grep -c 'org.kde.plasma.appmenu')"
 CHK "system tray in top bar" "1" "$(printf '%s' "$TP" | grep -c 'org.kde.plasma.systemtray')"
 CHK "clock in top bar"        "1" "$(printf '%s' "$TP" | grep -c 'org.kde.plasma.digitalclock')"
@@ -50,8 +51,42 @@ echo "  [debug] top height value seen: '$TPH' | dock height value seen: '$DPH'"
 CHKR "top bar height 24..44px (target ~30)" "24" "44" "$TPH"
 CHKR "dock height 44..66px (target ~52)" "44" "66" "$DPH"
 
+# Panel visibility: 0=NormalPanel 1=AutoHide 2=DodgeWindows 3=WindowsGoBelow.
+# apply.sh writes this key (the scripting API cannot) and Plasma re-serialises it
+# on every plasmashellrc write, so it must read back as 2 after an apply.
+#
+# Check the LIVE panel ids from the probe, not every [PlasmaViews][Panel N]
+# section on disk: plasmashellrc is written asynchronously, so right after
+# layout.js runs it can still list panels that were just removed. Checking the
+# stale ones produced a false failure (and a needless rollback) on a correct
+# apply.
+echo "--- panel visibility (dodge windows) ---"
+EXP_VIS="${PANEL_VISIBILITY:-2}"
+LIVE_PIDS="$(printf '%s\n' "$PROBE" | sed -n 's/^panelids=//p' | tail -1 | tr ',' ' ')"
+DISK_PIDS="$(grep -oE '^\[PlasmaViews\]\[Panel [0-9]+\]' "$CFG/plasmashellrc" 2>/dev/null \
+            | grep -oE '[0-9]+' | sort -u | tr '\n' ' ' | sed 's/ $//')"
+if [ -z "$LIVE_PIDS" ]; then
+  echo "FAIL  panel visibility  (probe reported no live panel ids)"
+  FAILED=$((FAILED+1))
+else
+  for pid in $LIVE_PIDS; do
+    CHK "panel $pid visibility = $EXP_VIS (dodge windows)" "$EXP_VIS" \
+      "$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $pid" --key panelVisibility 2>/dev/null || echo "(unset)")"
+  done
+  # Leftover on-disk sections for panels that no longer exist are Plasma's to
+  # reap; report them, but they are not a failure of this config.
+  STALE=""
+  for pid in $DISK_PIDS; do
+    case " $LIVE_PIDS " in *" $pid "*) ;; *) STALE="$STALE $pid" ;; esac
+  done
+  [ -z "$STALE" ] || echo "INFO  stale [PlasmaViews][Panel N] section(s) awaiting Plasma reap:$STALE"
+fi
+
 echo "--- kwin ---"
-CHK "kwin decoration library = aurorae" "org.kde.kwin.aurorae" "$(q kwinrc org.kde.kdecoration2 library)"
+# Aurorae installs two decoration plugins side by side (org.kde.kwin.aurorae and
+# .v2), both loadable; the live session resolves the .v2 id, so that is what this
+# project pins in kwinrc and in the LNF defaults.
+CHK "kwin decoration library = aurorae.v2" "org.kde.kwin.aurorae.v2" "$(q kwinrc org.kde.kdecoration2 library)"
 CHK "virtual desktops = 4" "4" "$(q kwinrc Desktops Number)"
 CHK "desktop rows = 1" "1" "$(q kwinrc Desktops Rows)"
 CHK "wobbly windows off" "false" "$(q kwinrc Plugins wobblywindowsEnabled)"
@@ -69,21 +104,50 @@ case "$LNF" in
   Orchis-dark) SUPPORTED="yes"; EXP_LNF=com.github.vinceliuice.Orchis-dark; EXP_COLOR=OrchisDark; EXP_ICONS=FairyWren_Dark;  EXP_CURSOR=Bibata-Modern-Ice; EXP_GTK=Orchis-Dark; EXP_DECO=__aurorae__svg__Orchis-dark ;;
   *) EXP_LNF="($LNF)"; EXP_COLOR="($LNF)"; EXP_ICONS="($LNF)"; EXP_CURSOR="($LNF)"; EXP_GTK="($LNF)"; EXP_DECO="($LNF)"; echo "note: unknown look-and-feel '$LNF' (expected Orchis or Orchis-dark)"; ;;
 esac
+# Persisted for the reboot-persistence check further down.
+SFX="$(printf '%s' "$LNF" | sed -e 's/.*-dark/dark/' -e 's/.*/light/')"
 CHK "look-and-feel is a supported mode" "yes" "$SUPPORTED"
 CHK "global theme package" "$EXP_LNF" "$(q kdeglobals KDE LookAndFeelPackage)"
 CHK "auto theme switching off" "false" "$(q kdeglobals KDE AutomaticLookAndFeel)"
 CHK "auto theme switching on idle off" "false" "$(q kdeglobals KDE AutomaticLookAndFeelOnIdle)"
+# Pinning the defaults is what stops a re-enabled autoswitcher from snapping
+# back to the stock Breeze look-and-feels, so assert the pair, not just the flags.
+CHK "pinned light look-and-feel" "com.github.vinceliuice.Orchis" "$(q kdeglobals KDE DefaultLightLookAndFeel)"
+CHK "pinned dark look-and-feel"  "com.github.vinceliuice.Orchis-dark" "$(q kdeglobals KDE DefaultDarkLookAndFeel)"
 CHK "kwin decoration theme" "$EXP_DECO" "$(q kwinrc org.kde.kdecoration2 theme)"
 CHK "color scheme ($LNF)" "$EXP_COLOR" "$(q kdeglobals General ColorScheme)"
 CHK "icons ($LNF)" "$EXP_ICONS" "$(q kdeglobals Icons Theme)"
 CHK "cursor ($LNF)" "$EXP_CURSOR" "$(q kcminputrc Mouse cursorTheme)"
+CHK "cursor size = 24" "24" "$(q kcminputrc Mouse cursorSize)"
 CHK "font = Noto Sans 10" "Noto Sans,10,-1,5,50,0,0,0,0,0" "$(q kdeglobals General font)"
 
-echo "--- gtk ($LNF) ---"
-CHK "gtk-3.0 theme" "$EXP_GTK" "$(grep '^gtk-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
-CHK "gtk icons" "$EXP_ICONS" "$(grep '^gtk-icon-theme-name=' "$CFG/gtk-3.0/settings.ini" 2>/dev/null | cut -d= -f2)"
+# Splash: verify the configured theme actually resolves. plasma-ksplash.service
+# runs ksplashqml with no arguments, so ksplashqml resolves the name itself from
+# ksplashrc and falls back silently - a name pointing at nothing means the config
+# claims a splash the user never sees.
+# Resolution goes through scripts/splash-theme-path.sh: on Plasma 6.7 a splash is
+# a plasma/look-and-feel package providing contents/splash/Splash.qml, and the
+# legacy plasma/splash/themes root does not exist. Checking it here is what
+# reported a working Orchis splash as a dangling reference.
+CUR_SPLASH="$(q ksplashrc KSplash Theme)"
+if [ "$CUR_SPLASH" = "(unset)" ] || [ -z "$CUR_SPLASH" ]; then
+  echo "INFO  no splash theme configured (KSplash uses the active look-and-feel's splash)"
+elif SPLASH_DIR="$(bash "$ROOT/scripts/splash-theme-path.sh" "$CUR_SPLASH")"; then
+  echo "PASS  splash theme resolves: $CUR_SPLASH ($SPLASH_DIR)"
+  CHK "splash engine = KSplashQML" "KSplashQML" "$(q ksplashrc KSplash Engine)"
+else
+  echo "WARN  ksplashrc references '$CUR_SPLASH' but no look-and-feel package provides contents/splash/Splash.qml for it (KSplash falls back to the stock splash)"
+fi
 
-echo "--- LNF defaults patched (survives package updates?) ---"
+echo "--- gtk ($LNF) ---"
+# apply.sh writes gtk-3.0 AND gtk-4.0; both must agree or GTK4 apps look wrong.
+for g in gtk-3.0 gtk-4.0; do
+  CHK "$g theme"    "$EXP_GTK"  "$(grep '^gtk-theme-name=' "$CFG/$g/settings.ini" 2>/dev/null | cut -d= -f2)"
+  CHK "$g icons"    "$EXP_ICONS" "$(grep '^gtk-icon-theme-name=' "$CFG/$g/settings.ini" 2>/dev/null | cut -d= -f2)"
+  CHK "$g cursor"   "$EXP_CURSOR" "$(grep '^gtk-cursor-theme-name=' "$CFG/$g/settings.ini" 2>/dev/null | cut -d= -f2)"
+done
+
+echo "--- LNF defaults patched (survives package updates + other switch paths?) ---"
 LNFD="$HOME/.local/share/plasma/look-and-feel"
 for pair in "com.github.vinceliuice.Orchis Bibata-Modern-Ice FairyWren_Light" \
              "com.github.vinceliuice.Orchis-dark Bibata-Modern-Ice FairyWren_Dark"; do
@@ -91,8 +155,31 @@ for pair in "com.github.vinceliuice.Orchis Bibata-Modern-Ice FairyWren_Light" \
   D="$LNFD/$1/contents/defaults"
   CUR="$(grep '^cursorTheme=' "$D" 2>/dev/null | cut -d= -f2)"
   ICO="$(grep '^Theme=' "$D" 2>/dev/null | cut -d= -f2)"
+  LIB="$(grep '^library=' "$D" 2>/dev/null | cut -d= -f2)"
   CHK "LNF $1: cursor=$2 icons=$3" "yes" "$([ "$CUR" = "$2" ] && [ "$ICO" = "$3" ] && echo yes || echo no)"
+  CHK "LNF $1: decoration library = aurorae.v2" "org.kde.kwin.aurorae.v2" "${LIB:-(unset)}"
 done
+
+echo "--- fontconfig (Inter web subsets excluded) ---"
+FCF="$CFG/fontconfig/fonts.conf"
+if [ -f "$FCF" ]; then
+  CHK "fontconfig rejectfont present" "yes" \
+    "$([ -f "$FCF" ] && grep -q '<rejectfont>' "$FCF" && echo yes || echo no)"
+  CHK "Inter web subset rejected" "yes" \
+    "$(grep -q 'Inter/web' "$FCF" && echo yes || echo no)"
+  CHK "Inter woff-hinted subset rejected" "yes" \
+    "$(grep -q 'Inter/extras/woff-hinted' "$FCF" && echo yes || echo no)"
+else
+  echo "FAIL  $FCF missing (apply.sh writes it to avoid the fontconfig cache corruption that crashes plasmashell)"
+  FAILED=$((FAILED+1))
+fi
+
+echo "--- wallpaper ---"
+WALL_NAME="wavy_lines_v01_5120x2880.png"
+WALL_LIVE="$HOME/.local/share/wallpapers/kde-setup-02/$WALL_NAME"
+WALL_VENDORED="$ROOT/assets/wallpapers/$WALL_NAME"
+CHK "wallpaper present (live or vendored copy)" "yes" \
+  "$([ -f "$WALL_LIVE" ] || [ -f "$WALL_VENDORED" ] && echo yes || echo no)"
 
 echo "--- backup present ---"
 BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
@@ -152,9 +239,18 @@ else
 fi
 
 echo "--- reboot persistence ---"
-MRK="$(ls -1t "$ROOT"/.applied-* 2>/dev/null | head -1)"
+# Read the marker for the mode that is actually applied. Picking the newest
+# .applied-* file regardless of mode reported on the wrong marker whenever the
+# two modes were applied out of order.
+MRK="$ROOT/.applied-$SFX"
 CUR_BOOT="$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || echo none)"
-if [ -n "$MRK" ] && [ -f "$MRK" ]; then
+# During an apply the marker on disk still belongs to the PREVIOUS run, because
+# apply.sh only writes it after verification succeeds. Comparing that stale
+# marker to the current boot produced a bogus "settings survived a full reboot"
+# PASS for a config that had just been written. Defer instead.
+if [ -n "${KDE_APPLY_IN_PROGRESS:-}" ]; then
+  echo "INFO  reboot persistence deferred: apply.sh writes .applied-$SFX after verification passes"
+elif [ -n "$SFX" ] && [ -f "$MRK" ]; then
   APP_BOOT="$(grep '^BOOT=' "$MRK" 2>/dev/null | cut -d= -f2)"
   APP_BK="$(grep '^APPLIED=' "$MRK" 2>/dev/null | cut -d= -f2)"
   if [ -n "$APP_BOOT" ] && [ "$APP_BOOT" != "$CUR_BOOT" ]; then
@@ -165,8 +261,10 @@ if [ -n "$MRK" ] && [ -f "$MRK" ]; then
     echo "SKIP  $MRK has no BOOT= line (marked before this feature)"
   fi
   [ -n "$APP_BK" ] && [ -d "$APP_BK" ] && echo "INFO  applied backup on record: $APP_BK"
+elif [ -n "$SFX" ]; then
+  echo "SKIP  no .applied-$SFX marker (this mode has not been applied by apply.sh yet)"
 else
-  echo "SKIP  no .applied-* marker (apply.sh has not completed yet)"
+  echo "SKIP  look-and-feel is not a supported mode, cannot pick a marker"
 fi
 
 echo "=== result ==="

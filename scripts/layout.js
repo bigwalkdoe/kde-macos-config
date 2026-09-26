@@ -31,8 +31,11 @@ var topPanel = new Panel;
 topPanel.location = "top";
 topPanel.height = Math.round(gridUnit * 10 / 6);   // = 30 px at gridUnit 18
 topPanel.floating = false;                          // flush against the screen edge
-topPanel.hiding = "normal";                         // always visible, windows may cover it
 topPanel.offset = 0;
+// Panel visibility is deliberately NOT set here: the scripting API drops
+// visibility assignments silently. apply.sh writes the real, Plasma-owned key
+// ([PlasmaViews][Panel N] panelVisibility) after this script runs, and
+// verify.sh asserts it — so setting it here would only be dead code.
 
 topPanel.addWidget("org.kde.plasma.appmenu");       // Global Menu (app menus + fallback)
 topPanel.addWidget("org.kde.plasma.panelspacer");
@@ -48,8 +51,7 @@ var dock = new Panel;
 dock.location = "bottom";
 dock.height = Math.round(gridUnit * 26 / 9);        // = 52 px at gridUnit 18
 dock.floating = true;                               // floating visual (rounded, margins)
-dock.hiding = "normal";                             // no auto-hide surprises in fullscreen
-dock.offset = 0;
+dock.offset = 0;                                    // visibility set by apply.sh, see above
 dock.alignment = "center";                          // centered on the screen
 dock.minimumLength = -1;                            // "fit content" (shrinks to the icons)
 dock.maximumLength = -1;
@@ -72,6 +74,13 @@ tasks.reloadConfig();
 dock.addWidget("org.kde.plasma.marginsseparator");  // subtle divider before Trash
 dock.addWidget("org.kde.plasma.trash");             // trash at the far end
 log.push("dock ok (" + dock.location + ", h=" + dock.height + ")");
+
+// Report the panel ids we just created. apply.sh cannot reliably guess them:
+// removing all panels and recreating them assigns BRAND NEW ids, and plasmashell
+// flushes plasmashellrc asynchronously, so the ids on disk lag behind the live
+// ones. Writing panelVisibility to the stale on-disk ids silently does nothing -
+// which is exactly how the setting appeared to apply but never took effect.
+log.push("panelIds=" + topPanel.id + "," + dock.id);
 
 locked = true;                                      // match distro default (widgets locked)
 log.push("layout complete");
