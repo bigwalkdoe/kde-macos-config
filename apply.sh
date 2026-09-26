@@ -109,6 +109,22 @@ bash "$ROOT/scripts/patch-lnf.sh" || die "LNF patch failed"
 plasma-apply-lookandfeel -a "$LNF_PKG" || die "plasma-apply-lookandfeel failed"
 plasma-apply-desktoptheme "$LNF"  || die "plasma-apply-desktoptheme failed"
 plasma-apply-colorscheme "$COLORS" || die "plasma-apply-colorscheme failed"
+# Confirm the session actually ENDED UP in the requested mode. These calls are a
+# no-op when kdeglobals already records the package, and the two can disagree:
+# an external theme switch (System Settings, lookandfeeltool, the autoswitcher)
+# can leave plasmarc on Orchis-dark while kdeglobals still says Orchis. Asking
+# for light then printed "already set", changed nothing, and the rest of the
+# apply went on to write light GTK wiring on top of a dark session - verify
+# caught it and rolled the whole apply back. Trust the effective theme, not the
+# package marker, and force it if they disagree.
+if [ "$(kreadconfig6 --file plasmarc --group Theme --key name)" != "$LNF" ]; then
+  echo "note: plasmarc theme is '$(kreadconfig6 --file plasmarc --group Theme --key name)', expected '$LNF' - forcing"
+  kwriteconfig6 --file plasmarc --group Theme --key name        "$LNF"   || die "plasmarc theme"
+  kwriteconfig6 --file plasmarc --group Theme --key colorScheme "$COLORS" || die "plasmarc colorScheme"
+  plasma-apply-desktoptheme "$LNF" || die "plasma-apply-desktoptheme failed"
+fi
+[ "$(kreadconfig6 --file plasmarc --group Theme --key name)" = "$LNF" ] \
+  || die "plasmarc theme did not settle on '$LNF'"
 # Disarm KDE 6.7's built-in auto dark/light theme switcher (kded module
 # lookandfeelautoswitcher applies DefaultDark/LightLookAndFeel on idle +
 # schedule boundaries). Pin defaults at the Orchis pair so even a manual
