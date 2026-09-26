@@ -309,8 +309,26 @@ shutdown_shell graceful || die "could not stop plasmashell"
 start_shell || die "plasmashell did not come back"
 
 say "Applying panel layout (scripts/layout.js)"
+# Resolve the pinned dock launchers first and inject them into layout.js. The
+# launcher ids used to be hardcoded in layout.js, which meant an app that is not
+# installed became a generic "Unknown application" tile - and unpinning it by hand
+# did not stick, because layout.js rewrites the whole list on every apply.
+DOCK_LAUNCHERS="$(bash "$ROOT/scripts/resolve-launchers.sh" "$ROOT/scripts/dock-launchers.list")" \
+  || die "could not resolve the pinned dock launchers"
+# The value is interpolated into a JS string literal, so keep it to the character
+# set the resolver can emit; that also makes the sed below safe.
+case "$DOCK_LAUNCHERS" in
+  *[!A-Za-z0-9.,:_-]*) die "resolved launcher list has unexpected characters" ;;
+esac
+LAYOUT_JS="$(sed "s|@DOCK_LAUNCHERS@|$DOCK_LAUNCHERS|g" "$ROOT/scripts/layout.js")" \
+  || die "could not render layout.js"
+# Guard the substitution explicitly: without this, an unresolved token would make
+# layout.js leave the dock untouched and the apply would still report success.
+case "$LAYOUT_JS" in
+  *@DOCK_LAUNCHERS@*) die "layout.js still contains the @DOCK_LAUNCHERS@ token" ;;
+esac
 LAYOUT_OUT="$(gdbus call --session --dest org.kde.plasmashell --object-path /PlasmaShell \
-  --method org.kde.PlasmaShell.evaluateScript "$(cat "$ROOT/scripts/layout.js")" 2>&1)" || die "layout script failed: $LAYOUT_OUT"
+  --method org.kde.PlasmaShell.evaluateScript "$LAYOUT_JS" 2>&1)" || die "layout script failed: $LAYOUT_OUT"
 echo "$LAYOUT_OUT"
 echo "$LAYOUT_OUT" | grep -q "layout complete" || die "layout did not complete"
 echo "$LAYOUT_OUT" | grep -qi "ERROR" && die "layout reported an error"

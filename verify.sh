@@ -45,6 +45,43 @@ CHK "launcher at start of dock" "1" "$(printf '%s' "$DP" | grep -c 'org.kde.plas
 CHK "icons-only task manager in dock" "1" "$(printf '%s' "$DP" | grep -c 'org.kde.plasma.icontasks')"
 CHK "trash at end of dock"    "1" "$(printf '%s' "$DP" | grep -c 'org.kde.plasma.trash')"
 CHK "dock is floating"        "1" "$(printf '%s' "$DP" | grep -c 'float=true')"
+
+# Every pinned launcher must resolve to a real .desktop file. An
+# "applications:<id>" entry with no desktop file is drawn by Plasma as a generic
+# "Unknown application" tile, and because layout.js rewrites the whole launcher
+# list on every apply, such a tile cannot be removed by hand. This repo shipped
+# applications:code.desktop while VS Code installs com.microsoft.VSCode.desktop,
+# which is exactly how that happened. Check the live list against the same
+# resolver apply.sh pins from, so the two cannot disagree.
+echo "--- dock launchers resolve to installed apps ---"
+DOCK_LAUNCHERS="$(awk '
+  /^\[Containments\]\[[0-9]+\]\[Applets\]\[[0-9]+\]$/ { applet = $0; next }
+  /^plugin=org\.kde\.plasma\.icontasks$/ { target = applet; next }
+  /^\[/ { cur = $0; next }
+  /^launchers=/ {
+    if (target != "" && cur == target "[Configuration][General]") {
+      sub(/^launchers=/, ""); print; exit
+    }
+  }
+' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+if [ -z "$DOCK_LAUNCHERS" ]; then
+  echo "FAIL  could not read the dock launcher list from plasma-org.kde.plasma.desktop-appletsrc"
+  FAILED=$((FAILED+1))
+else
+  n=0
+  for entry in ${DOCK_LAUNCHERS//,/ }; do
+    case "$entry" in applications:*) ;; *) continue ;; esac
+    id="${entry#applications:}"
+    n=$((n + 1))
+    if dock_app="$(bash "$ROOT/scripts/desktop-file-path.sh" "$id")"; then
+      echo "PASS  dock launcher $id -> ${dock_app/#$HOME/~}"
+    else
+      echo "FAIL  dock launcher $id has no installed .desktop file (Plasma draws \"Unknown application\")"
+      FAILED=$((FAILED+1))
+    fi
+  done
+  [ "$n" -gt 0 ] || echo "INFO  no pinned dock launchers configured"
+fi
 TPH="$(printf '%s' "$TP" | sed -n 's/.*;h=\([0-9]*\);.*/\1/p' | head -1)"
 DPH="$(printf '%s' "$DP" | sed -n 's/.*;h=\([0-9]*\);.*/\1/p' | head -1)"
 echo "  [debug] top height value seen: '$TPH' | dock height value seen: '$DPH'"

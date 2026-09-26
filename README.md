@@ -88,6 +88,9 @@ kde-macos-config/
 │   ├── install-sddm-orchis.sh  (sudo) installs the Orchis login theme
 │   ├── restore-backup.sh       shared restore path used by rollback.sh + fail-safe
 │   ├── layout.js        panel layout (top bar + dock), native scripting API
+│   ├── dock-launchers.list     pinned dock apps, edited to add/remove one
+│   ├── resolve-launchers.sh    keeps only launchers that are installed
+│   ├── desktop-file-path.sh    resolves a desktop-file id to its path
 │   ├── tray-config.js   system tray curation (pinned items + order)
 │   └── probe-panels.js  read-only panel/widget probe (detect.sh + verify.sh)
 └── screenshots/         captured after apply
@@ -168,6 +171,42 @@ Executed through `org.kde.PlasmaShell.evaluateScript` (native API):
 
 Panel heights scale with your `gridUnit`; `verify.sh` therefore range-checks them
 (24–44 px and 44–66 px) rather than comparing exact values.
+
+#### Pinned dock launchers — `scripts/dock-launchers.list`
+
+The launcher list is **not** hardcoded in `layout.js`. It lives in
+`scripts/dock-launchers.list`, one app per line in dock order:
+
+```
+org.kde.dolphin.desktop
+org.kde.konsole.desktop
+org.mozilla.firefox.desktop
+com.google.Chrome.desktop
+com.microsoft.VSCode.desktop|code.desktop
+```
+
+`apply.sh` resolves that list through `scripts/resolve-launchers.sh`, which keeps
+only ids whose `.desktop` file is actually installed here
+(`scripts/desktop-file-path.sh`), then injects the result into `layout.js`. Ids
+that are not installed are skipped and reported, never pinned. Alternatives
+(`a.desktop|b.desktop`) let one line cover distros that disagree on the id; the
+first one installed wins, so an app is pinned at most once.
+
+This matters because a pinned `applications:<id>` with no desktop file is drawn by
+Plasma as a generic **"Unknown application"** tile, and since `layout.js` rewrites
+the entire launcher list on every apply, **unpinning it by hand does not stick**.
+This repo shipped `applications:code.desktop` while VS Code installs
+`com.microsoft.VSCode.desktop`, which is how a permanently unremovable broken tile
+ended up in the dock. `verify.sh` now checks every live launcher against the same
+resolver, so a stale id fails verification instead of reaching your screen.
+
+**To remove an app from the dock:** delete its line from
+`scripts/dock-launchers.list` and re-run `./apply.sh`. Unpinning in the Plasma UI
+alone will be reverted by the next apply.
+
+`layout.js` is a template: it contains an `@DOCK_LAUNCHERS@` token that `apply.sh`
+substitutes. Running it directly leaves the launchers untouched and says so in the
+log, rather than pinning an unverified id.
 
 `scripts/tray-config.js` then curates the tray so the bar shows only:
 clipboard · network · bluetooth · volume · brightness · battery · notifications

@@ -60,13 +60,24 @@ dock.addWidget("org.kde.plasma.kickoff");           // launcher at the beginning
 
 var tasks = dock.addWidget("org.kde.plasma.icontasks");   // Icons-only Task Manager (native)
 tasks.currentConfigGroup = ["General"];
-tasks.writeConfig(
-    "launchers",
-    "applications:org.kde.dolphin.desktop," +       // Finder equivalent
-    "applications:org.kde.konsole.desktop," +       // Terminal
-    "applications:org.mozilla.firefox.desktop," +   // Browser
-    "applications:com.google.Chrome.desktop," +     // Browser
-    "applications:code.desktop");                   // IDE
+
+// The pinned launcher list is injected by apply.sh, which resolves every id
+// against the desktop files actually installed here (scripts/resolve-launchers.sh)
+// before handing it over. Do NOT hardcode ids here: an id with no desktop file
+// makes Plasma draw a generic "Unknown application" tile, and because this script
+// rewrites the whole list on every apply, that tile cannot be unpinned by hand.
+// The list itself lives in scripts/dock-launchers.list.
+var PINNED_RAW = "@DOCK_LAUNCHERS@";
+if (PINNED_RAW.indexOf("@") !== -1) {
+    // Substitution did not happen. Leave the dock exactly as it is rather than
+    // guess: pinning an unverified id is worse than pinning none, and clearing
+    // the list would silently empty the user's dock.
+    log.push("dock launchers: @DOCK_LAUNCHERS@ not substituted - leaving them untouched");
+} else {
+    var PINNED = PINNED_RAW.split(",");
+    tasks.writeConfig("launchers", PINNED.join(","));
+    log.push("dock launchers (" + PINNED.length + "): " + PINNED.join(" "));
+}
 tasks.reloadConfig();
 tasks.writeConfig("separateLaunchers", true);       // pinned != running, visually distinct
 tasks.reloadConfig();

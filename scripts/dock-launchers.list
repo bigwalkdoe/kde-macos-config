@@ -1,0 +1,18 @@
+# kde-macos-config -- pinned dock launchers
+#
+# One app per line, in dock order. Blank lines and # comments are ignored.
+# To remove an app from the dock, delete its line here and re-run ./apply.sh --
+# unpinning it by hand does not stick, because layout.js rewrites the whole list
+# on every apply.
+#
+# An id is only pinned if its .desktop file is actually installed; anything
+# missing is skipped and reported during apply, so a stale id can never turn into
+# a generic "Unknown application" tile. Separate alternatives for the same app
+# with "|": the first one that is installed wins, so an app is pinned at most
+# once. Use that where distros and third-party repos disagree on the id.
+
+org.kde.dolphin.desktop                  # Files
+org.kde.konsole.desktop                  # Terminal
+org.mozilla.firefox.desktop              # Web
+com.google.Chrome.desktop                # Web
+com.microsoft.VSCode.desktop|code.desktop # VS Code (the RPM ships the long id)
