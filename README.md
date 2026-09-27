@@ -375,10 +375,16 @@ identically.
   an unwritten extent or a stale page-cache page rather than damaged media. A
   minority return non-repeating data, which is the part that would look like a
   real read fault. `verify.sh` counts the two separately and only warns on the
-  second. To settle it for real:
-  `sudo btrfs scrub start -Bd / ; sudo btrfs scrub status /` (same for `/home`),
-  plus a `memtest86+` boot to rule out RAM. The burst also correlates with
-  heavy-I/O phases of `apply.sh`, which restarts `plasmashell`.
+  second. The burst tracks heavy-I/O phases rather than idling: no event
+  arrives while the machine is quiet, and re-reading live verity-protected
+  system libraries produces none either.
+  To settle it for real, run `./scripts/check-storage.sh`. It scrubs every
+  btrfs mount — the only step that actually re-reads and re-checksums the
+  data — then reads the device error counters, maps the affected inodes to
+  live files, and exits non-zero if it finds a genuine fault. `--dry-run`
+  reports the same information without scrubbing, and says plainly that it
+  cannot conclude anything about the data. Add a `memtest86+` boot to rule
+  out RAM; no disk check covers that.
 - **No fullscreen detection for auto-switching.** `switch.sh --auto` skips a
   switch while the session is locked, but it cannot tell whether you are in a
   fullscreen window or a presentation — KWin's `queryWindowInfo` D-Bus call is

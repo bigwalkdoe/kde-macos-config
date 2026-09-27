@@ -299,9 +299,9 @@ if [ "$FSEV_OTHER" -gt 0 ]; then
   echo "WARN  $FSEV_OTHER fs-verity digest mismatches in last 24h that are not zero-fill"
   echo "      (+$FSEV_ZERO zero-fill reads, which are benign). No I/O, checksum or"
   echo "      medium error was logged by the NVMe or btrfs over the same window, so"
-  echo "      this is unconfirmed. To settle it:"
-  echo "        sudo btrfs scrub start -Bd / ; sudo btrfs scrub status /"
-  echo "        sudo btrfs scrub start -Bd /home ; sudo btrfs scrub status /home"
+  echo "      this is unconfirmed. To settle it, run the checker that actually"
+  echo "      scrubs the data and interprets the result:"
+  echo "        ./scripts/check-storage.sh"
   echo "      and boot memtest86+ to rule out RAM. See README section 10."
 elif [ "$FSEV_TOTAL" -gt 0 ]; then
   echo "INFO  $FSEV_TOTAL fs-verity zero-fill reads in last 24h (btrfs read-path artifact; no I/O error)"
