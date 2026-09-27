@@ -61,24 +61,65 @@ else
   done
 fi
 
-# The verdict lives in "scrub status", not in the scrub output above, so read it
-# separately and key off the error counters rather than off any wording.
+# The verdict lives in "scrub status", not in the scrub output above.
+#
+# Parse the --raw form, which is stable machine-readable JSON with underscored
+# keys, rather than the human -d form. The human form is what bit this script
+# before: it prints "Read errors:", "Csum errors:", "Verify errors:" with
+# SPACES, so a pattern written for underscored keys silently matches nothing --
+# which made a broken parse indistinguishable from a clean disk, and would have
+# reported PASS on a genuinely faulty drive.
+#
+# Rule enforced below: never conclude "clean" from an absence of data. If the
+# output cannot be parsed, that is reported as unknown, not as a pass.
 for m in $MOUNTS; do
   if [ "$DRY" -eq 1 ]; then
     printf '  %-24s %s\n' "$m" "(skipped: --dry-run)"
     continue
   fi
-  st="$(btrfs scrub status -d "$m" 2>/dev/null || true)"
-  printf '  %-24s %s\n' "$m" "$(printf '%s' "$st" | grep -m1 'scrub status' || echo 'no status')"
-  # Any non-zero error/csum/reused counter here means real data damage.
-  bad="$(printf '%s' "$st" | grep -E 'error_count|csum_errors|csum_read_errors|read_errors|write_errors|reused_tree|reused_data|uncorrectable_errors' \
-        | grep -vE ':[[:space:]]*0$' || true)"
+  raw="$(btrfs scrub status --raw "$m" 2>/dev/null || true)"
+  pretty="$(btrfs scrub status -d "$m" 2>/dev/null | sed -n '1,4p' | tr '\n' ' ' || true)"
+  printf '  %-24s %s\n' "$m" "${pretty:-no scrub on record}"
+
+  if ! printf '%s' "$raw" | grep -q 'device_stats'; then
+    # No scrub has ever run, or the format is not what we expect. Either way
+    # there is no evidence of health -- say so instead of implying all is well.
+    FAULT=1
+    echo "    FAIL: could not read scrub counters for $m."
+    echo "          No scrub appears to be on record, or 'btrfs scrub status"
+    echo "          --raw' returned something unexpected, so the data has not"
+    echo "          been verified at all. Raw output was:"
+    printf '%s\n' "$raw" | sed 's/^/            /' | head -5
+    continue
+  fi
+
+  # Pull every "<key>":<number> pair out of device_stats. Count how many we
+  # recognised so an empty result cannot masquerade as "all zero".
+  pairs="$(printf '%s' "$raw" | grep -oE '"[a-z_]+":[[:space:]]*[0-9]+' \
+           | sed 's/"//g; s/:[[:space:]]*/ /' || true)"
+  nseen="$(printf '%s' "$pairs" | grep -c . || true)"
+  if [ "$nseen" -eq 0 ]; then
+    FAULT=1
+    echo "    FAIL: scrub counters for $m parsed to nothing ($nseen fields)."
+    echo "          Refusing to call this clean without evidence."
+    continue
+  fi
+
+  # Every counter except the csum/read informational ones is a fault if non-zero.
+  # "no_csums" counts extents simply lacking a checksum, which is normal, so it
+  # is reported but not treated as damage.
+  # ($2+0) so a missing or malformed value counts as zero rather than as a
+  # non-zero "error" -- the nseen guard above already proves fields were found.
+  bad="$(printf '%s' "$pairs" | awk '$1 ~ /err/ && ($2+0) != 0' || true)"
   if [ -n "$bad" ]; then
     FAULT=1
-    echo "    FAIL: scrub found errors:"
+    echo "    FAIL: scrub reported errors on $m:"
     printf '%s\n' "$bad" | sed 's/^/      /'
   else
-    echo "    PASS: no scrub errors (all data re-read and re-checksummed)"
+    nocsum="$(printf '%s' "$pairs" | awk '$1 == "no_csums" {print $2}')"
+    echo "    PASS: all $nseen scrub counters zero on $m (data re-read and re-checksummed)"
+    [ -n "${nocsum:-}" ] && [ "$nocsum" != 0 ] \
+      && echo "          ($nocsum extents have no checksum; normal, not damage)"
   fi
 done
 

@@ -385,6 +385,15 @@ identically.
   reports the same information without scrubbing, and says plainly that it
   cannot conclude anything about the data. Add a `memtest86+` boot to rule
   out RAM; no disk check covers that.
+  **Settled on this machine (2026-09-27):** the checker scrubbed 140.74 GiB on
+  `/` and 140.10 GiB on `/home` — `Error summary: no errors found` on both —
+  with every device counter at 0 and no mismatch resolving to a live file. All
+  allocated data was re-read and re-checksummed clean, so the mismatches are
+  confirmed to be a read-path artifact rather than damaged media. The one
+  variable no disk check covers is RAM, so `memtest86+` still needs one boot to
+  close that. `verify.sh` keeps warning about the mismatches regardless: it
+  reports what the kernel logged, and the log does not change because a scrub
+  passed.
 - **No fullscreen detection for auto-switching.** `switch.sh --auto` skips a
   switch while the session is locked, but it cannot tell whether you are in a
   fullscreen window or a presentation — KWin's `queryWindowInfo` D-Bus call is
