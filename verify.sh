@@ -215,8 +215,18 @@ echo "--- wallpaper ---"
 WALL_NAME="wavy_lines_v02_5120x2880.png"
 WALL_LIVE="$HOME/.local/share/wallpapers/kde-setup-02/$WALL_NAME"
 WALL_VENDORED="$ROOT/assets/wallpapers/$WALL_NAME"
-CHK "wallpaper present (live or vendored copy)" "yes" \
-  "$([ -f "$WALL_LIVE" ] || [ -f "$WALL_VENDORED" ] && echo yes || echo no)"
+  CHK "wallpaper present (live or vendored copy)" "yes" \
+    "$([ -f "$WALL_LIVE" ] || [ -f "$WALL_VENDORED" ] && echo yes || echo no)"
+  # Presence alone is not enough. A stale file with the correct name used to
+  # satisfy the check above, so apply.sh would apply the wrong image and verify
+  # would still report PASS. Compare the bytes: the live copy must be the
+  # vendored asset.
+  if [ -f "$WALL_LIVE" ] && [ -f "$WALL_VENDORED" ]; then
+    CHK "live wallpaper matches the vendored asset" "same" \
+      "$(cmp -s "$WALL_LIVE" "$WALL_VENDORED" && echo same || echo differs)"
+  else
+    CHK "live wallpaper matches the vendored asset" "n/a" "no live copy"
+  fi
 
 echo "--- backup present ---"
 BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"

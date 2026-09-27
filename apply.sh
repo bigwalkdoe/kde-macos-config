@@ -423,16 +423,24 @@ done
 say "Wallpaper"
 WALLPAPER_DIR="$HOME/.local/share/wallpapers/kde-setup-02"
 WALLPAPER_NAME="wavy_lines_v02_5120x2880.png"
-if [ ! -f "$WALLPAPER" ]; then
-  # Self-heal: install the vendored asset from assets/wallpapers/ (committed
-  # to this repo so apply.sh is reproducible on a clean machine without the
-  # original Downloads zip).
-  VENDORED="$ROOT/assets/wallpapers/$WALLPAPER_NAME"
+# Self-heal: install the vendored asset from assets/wallpapers/ (committed
+# to this repo so apply.sh is reproducible on a clean machine without the
+# original Downloads zip).
+#
+# Heal on absent OR altered content, not absence alone. A stale file that merely
+# has the right name -- an earlier release, or a same-named image unpacked from
+# the original Downloads zip -- passes a bare -f test, so the old check would
+# apply the wrong picture and still report success. That is exactly what
+# happened here: the live v02 was 3.1 MB while the vendored asset is 495 KB.
+# cmp is byte-exact and needs no hashing tool.
+VENDORED="$ROOT/assets/wallpapers/$WALLPAPER_NAME"
+if [ ! -f "$WALLPAPER" ] || { [ -f "$VENDORED" ] && ! cmp -s "$VENDORED" "$WALLPAPER"; }; then
   if [ -f "$VENDORED" ]; then
     mkdir -p "$WALLPAPER_DIR"
     cp -f "$VENDORED" "$WALLPAPER" && echo "installed vendored wallpaper: $WALLPAPER"
   else
-    die "wallpaper file missing: $WALLPAPER (and no vendored copy at $VENDORED)"
+    # No repair source. Tolerate this only if a live copy already exists.
+    [ -f "$WALLPAPER" ] || die "wallpaper file missing: $WALLPAPER (and no vendored copy at $VENDORED)"
   fi
 fi
 [ -f "$WALLPAPER" ] || die "wallpaper file missing: $WALLPAPER"
