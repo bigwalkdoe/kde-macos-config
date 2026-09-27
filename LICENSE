@@ -25,13 +25,12 @@ THIRD-PARTY ASSETS — READ THIS BEFORE REDISTRIBUTING
 ---------------------------------------------------------------------------
 
 The MIT terms above cover the scripts, JavaScript, and documentation in this
-repository.
-
-They do NOT cover `assets/wallpapers/wavy_lines_v01_5120x2880.png`, which is
-vendored here for convenience. That file carries no embedded provenance or
-copyright metadata, so its origin and license could not be established. It is
-therefore provided "as is", with no license granted by the author, and you
-should confirm its status before redistributing this repository.
+repository, including the vendored wallpaper
+`assets/wallpapers/wavy_lines_v02_5120x2880.png`. That image is not a third-party
+asset: it is produced by `scripts/make-wallpaper.py`, which is part of this
+repository and derives it from constants in that file, so its provenance is
+verifiable rather than asserted. Run `./scripts/make-wallpaper.py --check` to
+confirm the committed PNG still matches the generator.
 
 Everything else this project *uses* is not bundled here and keeps its own
 license: the Orchis look-and-feel/color schemes, the FairyWren icon themes, the

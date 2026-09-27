@@ -20,7 +20,7 @@ esac
 # (hidden until the mouse reaches the screen edge; fullscreen dodges the bar).
 PANEL_VISIBILITY="${PANEL_VISIBILITY:-2}"
 SPLASH="${SPLASH:-AppleSplash}"
-WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
+WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v02_5120x2880.png"
 BACKUP=""; FAIL=0
 say(){ echo; echo "### $*"; }
 die(){ echo "FAIL: $*" >&2; FAIL=1; exit 1; }
@@ -422,7 +422,7 @@ done
 
 say "Wallpaper"
 WALLPAPER_DIR="$HOME/.local/share/wallpapers/kde-setup-02"
-WALLPAPER_NAME="wavy_lines_v01_5120x2880.png"
+WALLPAPER_NAME="wavy_lines_v02_5120x2880.png"
 if [ ! -f "$WALLPAPER" ]; then
   # Self-heal: install the vendored asset from assets/wallpapers/ (committed
   # to this repo so apply.sh is reproducible on a clean machine without the

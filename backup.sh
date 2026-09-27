@@ -66,7 +66,7 @@ done
 # runs. apply.sh self-heals a missing wallpaper by copying it out of assets/,
 # which is a write outside ~/.config that nothing could undo; recording the
 # prior state lets rollback remove it again if we were the ones who put it there.
-WALL="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
+WALL="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v02_5120x2880.png"
 [ -f "$WALL" ] && echo "present" > "$BK/wallpaper.state" || echo "absent" > "$BK/wallpaper.state"
 
 # Self-verification: the critical files must have landed.

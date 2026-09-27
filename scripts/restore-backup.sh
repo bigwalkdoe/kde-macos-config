@@ -79,7 +79,7 @@ restore_backup() {
   # after sourcing would otherwise make the restore write outside the intended
   # home - a silent, hard-to-spot data-loss bug.
   local LNFD="$HOME/.local/share/plasma/look-and-feel"
-  local WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v01_5120x2880.png"
+  local WALLPAPER="$HOME/.local/share/wallpapers/kde-setup-02/wavy_lines_v02_5120x2880.png"
   [ -d "$BK" ] || { echo "restore_backup: no such backup: $BK" >&2; return 1; }
   if [ -z "$QUIET" ]; then echo; echo "### Restoring from $BK"; fi
   shutdown_shell graceful

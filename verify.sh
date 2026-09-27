@@ -18,7 +18,7 @@ FV="$(grep -c '^plugin=org.kde.plasma.folder' "$CFG/plasma-org.kde.plasma.deskto
 CHK "no folder-view desktop remaining" "0" "$FV"
 DC="$(grep -c '^plugin=org.kde.desktopcontainment' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
 CHKR "clean desktop containment on every screen (>=1)" "1" "32" "$DC"
-WALL="$(grep -c 'wavy_lines_v01_5120x2880.png' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
+WALL="$(grep -c 'wavy_lines_v02_5120x2880.png' "$CFG/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null)"
 CHKR "wallpaper configured on every screen (>=1)" "1" "32" "$WALL"
 
 echo "--- panels (live) ---"
@@ -212,7 +212,7 @@ else
 fi
 
 echo "--- wallpaper ---"
-WALL_NAME="wavy_lines_v01_5120x2880.png"
+WALL_NAME="wavy_lines_v02_5120x2880.png"
 WALL_LIVE="$HOME/.local/share/wallpapers/kde-setup-02/$WALL_NAME"
 WALL_VENDORED="$ROOT/assets/wallpapers/$WALL_NAME"
 CHK "wallpaper present (live or vendored copy)" "yes" \
