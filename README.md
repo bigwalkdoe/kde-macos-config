@@ -422,6 +422,18 @@ separately-installed step). Reboot persistence auto-detects whether the running
 settings survived a reboot since the last apply, reading the marker for the mode
 that is actually applied.
 
+`UNVERIFIED` is the fourth outcome, next to PASS/FAIL/SKIP. A check that could
+not read its data source prints it and counts it as a failure. The health
+checks read the journal and `fc-cache`, both of which can fail silently —
+`journalctl` prints nothing and still exits 0 when it cannot open the journal, so
+an unreadable log and a quiet one are the same zero matches, and a `fc-cache`
+that could not run used to look like zero invalid caches. Reporting those as
+PASS would make a blind spot look like a clean bill of health, so the rules
+that `scripts/check-storage.sh` already follows apply here too: absence of data
+never yields a clean verdict. Because `apply.sh` gates its applied-marker on
+`verify.sh` pass 2, an unreadable log also stops an apply from being recorded as
+verified — restore journal access and re-apply.
+
 Manual checks after apply: global menu shows app menus (File/Edit/View…),
 tray icon actions work, clock updates, pinned dock apps launch, running apps
 show indicators, trash works, fullscreen dodges the panels cleanly, dual

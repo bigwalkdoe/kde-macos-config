@@ -8,6 +8,11 @@ FAILED=0
 CHK(){ if [ "$3" = "$2" ]; then echo "PASS  $1"; else echo "FAIL  $1  (expected '$2', got '$3')"; FAILED=$((FAILED+1)); fi; }
 # range check for values that Plasma snaps (e.g. panel heights); usage: CHKR <label> <min> <max> <value>
 CHKR(){ if [ "$4" -ge "$2" ] 2>/dev/null && [ "$4" -le "$3" ] 2>/dev/null; then echo "PASS  $1 ($4)"; else echo "FAIL  $1  (expected $2..$3, got '$4')"; FAILED=$((FAILED+1)); fi; }
+# A check that could not read its data source is neither evidence of the fault
+# nor evidence of health, so it must not print PASS. Counted as a failure so the
+# exit code cannot read as "all clear" -- the rule scripts/check-storage.sh
+# already follows: absence of data is never a clean verdict.
+UNVERIFIED(){ echo "UNVERIFIED  $1  -- $2"; FAILED=$((FAILED+1)); }
 q(){ kreadconfig6 --file "$1" --group "$2" --key "$3" 2>/dev/null || echo "(unset)"; }
 
 echo "=== kde-macos-config: verification ==="
@@ -266,15 +271,34 @@ fi
 
 echo "--- health (crash-loop + hardware) ---"
 CHK "plasmashell unit active" "active" "$(systemctl --user is-active plasma-plasmashell 2>/dev/null)"
-RECENT="$(
-  journalctl --user -u plasma-plasmashell --since '10 minutes ago' -o cat 2>/dev/null \
-    | grep -cE 'code=dumped|SIGSEGV|Failed to start' || true
+# journalctl prints nothing and still exits 0 when it cannot open the journal, so
+# an unreadable log and a genuinely quiet one both count as zero matches and the
+# old code reported the second as the first -- a blind spot on the very check
+# meant to catch a crash-loop. Probe readability first, over a window wide enough
+# that a running unit always has entries in it.
+JLINES="$(
+  journalctl --user -u plasma-plasmashell --since '24 hours ago' -o cat 2>/dev/null \
+    | grep -c . || true
 )"
-CHK "no plasmashell crash-loop in last 10 min" "0" "$RECENT"
-INVALID="$(
-  fc-cache -f 2>&1 | grep -c 'invalid cache' || true
-)"
-CHK "no invalid fontconfig caches" "0" "$INVALID"
+if [ "$JLINES" -gt 0 ] 2>/dev/null; then
+  RECENT="$(
+    journalctl --user -u plasma-plasmashell --since '10 minutes ago' -o cat 2>/dev/null \
+      | grep -cE 'code=dumped|SIGSEGV|Failed to start' || true
+  )"
+  CHK "no plasmashell crash-loop in last 10 min" "0" "$RECENT"
+else
+  UNVERIFIED "no plasmashell crash-loop in last 10 min" \
+    "the plasma-plasmashell user journal yielded no entries over 24h, so it was not read (journal not readable by this user, or rotated away); a crash in that window would be invisible"
+fi
+# Same rule for fontconfig: the old pipeline threw fc-cache's exit status away
+# with the rest of its output, so a fc-cache that could not run counted as zero
+# invalid caches. Keep the status.
+FC_OUT="$(fc-cache -f 2>&1)"; FC_RC=$?
+if [ "$FC_RC" -ne 0 ]; then
+  UNVERIFIED "no invalid fontconfig caches" "fc-cache -f exited $FC_RC, so the caches were not checked"
+else
+  CHK "no invalid fontconfig caches" "0" "$(printf '%s' "$FC_OUT" | grep -c 'invalid cache' || true)"
+fi
 # fs-verity reports a digest mismatch whenever a read returns bytes that differ
 # from the digest recorded for the file. Two very different situations produce
 # that same line, so they are counted separately:
@@ -289,8 +313,8 @@ CHK "no invalid fontconfig caches" "0" "$INVALID"
 # escalating, and it is a WARN rather than a failure because a btrfs read-path
 # bug can produce it too. The commands that actually settle it are in the message
 # and in README section 10.
-FSEV="$(journalctl -k --since '24 hours ago' -o cat 2>/dev/null \
-  | grep -E 'fs-verity.*CORRUPTED|FILE CORRUPTED' || true)"
+FSEV_KLOG="$(journalctl -k --since '24 hours ago' -o cat 2>/dev/null || true)"
+FSEV="$(printf '%s' "$FSEV_KLOG" | grep -E 'fs-verity.*CORRUPTED|FILE CORRUPTED' || true)"
 ZERO_BLOCK="$(head -c 4096 /dev/zero | sha256sum | cut -d' ' -f1)"
 FSEV_TOTAL="$(printf '%s' "$FSEV" | grep -c . || true)"
 FSEV_ZERO="$(printf '%s' "$FSEV" | grep -c "real_hash=sha256:$ZERO_BLOCK" || true)"
@@ -305,8 +329,13 @@ if [ "$FSEV_OTHER" -gt 0 ]; then
   echo "      and boot memtest86+ to rule out RAM. See README section 10."
 elif [ "$FSEV_TOTAL" -gt 0 ]; then
   echo "INFO  $FSEV_TOTAL fs-verity zero-fill reads in last 24h (btrfs read-path artifact; no I/O error)"
-else
+elif [ "$(printf '%s' "$FSEV_KLOG" | grep -c . || true)" -gt 0 ] 2>/dev/null; then
   echo "PASS  no fs-verity digest mismatch in last 24h"
+else
+  # An empty kernel log is indistinguishable from an unreadable one, and
+  # "no mismatch" derived from it would be a claim about nothing.
+  UNVERIFIED "no fs-verity digest mismatch in last 24h" \
+    "the kernel journal yielded no entries over 24h, so it was not read; mismatches in that window would be invisible"
 fi
 
 echo "--- reboot persistence ---"
