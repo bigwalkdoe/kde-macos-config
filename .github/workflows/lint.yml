@@ -29,3 +29,18 @@ jobs:
           bash -n \
             apply.sh backup.sh detect.sh rollback.sh switch.sh sync.sh verify.sh \
             scripts/*.sh
+
+  test-verify:
+    name: verify.sh log-reading health checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # verify.sh needs a live Plasma session, so it cannot run here. This
+      # exercises the health checks that read a log, by putting stub
+      # journalctl / fc-cache executables ahead of PATH and asserting the
+      # verdicts. The rest of verify.sh legitimately fails on a runner; only
+      # the health lines are asserted, which is why its result line is ignored.
+      # Bounded so a hung probe fails the job instead of stalling it.
+      - name: run test-verify.sh
+        run: timeout 300 bash scripts/test-verify.sh
