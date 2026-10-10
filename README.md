@@ -327,7 +327,8 @@ no cron, no root:
   `~/.config/systemd/user/` and enables it. The timer fires 2 min after login,
   then every 15 min; the service runs `switch.sh --auto`, which only applies when
   the clock has actually crossed a boundary (so it is a no-op otherwise).
-- `./switch.sh --check` — prints desired vs current mode without changing anything.
+- `./switch.sh --check` — prints desired vs current mode without changing anything,
+  including the current `override=` state.
 - `./switch.sh --auto` — applies dark/light if it differs from the current mode.
   It defers (and retries on the next 15 min tick) while the session is **locked**,
   since restarting plasmashell on an unattended screen is disruptive.
@@ -337,6 +338,9 @@ no cron, no root:
   every run: values must be `HH:MM` and sunrise must precede sunset, otherwise
   the script exits with a clear error instead of silently failing forever.
 - `./switch.sh --light|--dark` — explicit manual switch (same as `apply.sh`).
+  It also **pins** the mode, so the timer leaves it alone.
+- `./switch.sh --follow-schedule` — clears the pin and hands control back to the
+  timer, which settles on the scheduled mode within 15 min.
 - `./switch.sh --uninstall` — disables the timer and removes the unit files.
 - Timer-driven decisions are appended to `~/.config/kde-macos/switch.log`, so a
   switch that happened while you were away is still auditable.
@@ -344,6 +348,34 @@ no cron, no root:
 Note: the schedule drives `apply.sh`, which already guarantees icons/cursor stay
 pinned (see scripts/patch-lnf.sh), so both automatic and manual switching behave
 identically.
+
+### Overriding the schedule by hand
+
+The timer fires every 15 minutes, so a manual switch used to be undone within the
+quarter hour. `--light`/`--dark` now records `OVERRIDE=light|dark` in
+`switch.conf` and `--auto` becomes a no-op until you clear it:
+
+```bash
+./switch.sh --dark              # go dark now, and stop the timer arguing
+./switch.sh --check             # -> desired=light current=dark override=dark
+./switch.sh --follow-schedule   # hand control back to the clock
+```
+
+- The pin is written to `switch.conf`, so it survives reboots and applies to the
+  timer exactly as it does to a manual run. The file is rewritten atomically and
+  only its `OVERRIDE=` line is touched, so hand-edited times and comments survive.
+- The pin is only recorded once the mode actually applied — a switch that failed
+  does not claim to have held.
+- `--auto` checks the pin *before* applying anything, so it can never fight it.
+- An unrecognised `OVERRIDE` value fails the run with a clear error, like a bad
+  `SUNRISE`: silently ignoring it would leave a switcher that neither follows the
+  schedule nor does what you asked.
+- Only `switch.sh` sets the pin. `./apply.sh --dark` deliberately does not — it is
+  the low-level applier, and letting it decide policy would mean a plain re-apply
+  could quietly disable your schedule. Use `./switch.sh --light|--dark` for a
+  switch you want to keep.
+- `verify.sh` reports a pinned override as `INFO` — it is a deliberate choice, not
+  drift, but it is also the answer to "why is my theme not changing?".
 
 ## 10. Known limitations
 

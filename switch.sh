@@ -5,10 +5,13 @@
 #   ./switch.sh --uninstall      # remove them
 #   ./switch.sh --auto           # switch mode if the clock crossed a boundary
 #   ./switch.sh --check          # report desired vs current mode, change nothing
-#   ./switch.sh --light | --dark # explicit switch (delegates to apply.sh)
+#   ./switch.sh --light | --dark # explicit switch (delegates to apply.sh) and pin
+#   ./switch.sh --follow-schedule  # drop the pin, hand control back to the timer
 #
 # Times default to sunrise/sunset and can be overridden per-machine in
 #   ~/.config/kde-macos/switch.conf   ->   SUNRISE=06:30   SUNSET=19:30
+# A manual --light/--dark pins that mode in the same file (OVERRIDE=light|dark),
+# which --auto then honours until --follow-schedule clears it.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"; cd "$ROOT"
 UCFG="$HOME/.config/kde-macos"
@@ -18,6 +21,10 @@ TIM=kde-macos-switch.timer
 # ---- configuration --------------------------------------------------------
 SUNRISE="06:30"
 SUNSET="19:30"
+# Empty means "follow the schedule"; light/dark pins the mode regardless of the
+# clock. Defaulted here rather than only in switch.conf so an absent key and an
+# absent file behave the same under `set -u`.
+OVERRIDE=""
 if [ -f "$UCFG/switch.conf" ]; then
   # shellcheck source=/dev/null
   . "$UCFG/switch.conf"
@@ -33,6 +40,13 @@ for _t in SUNRISE SUNSET; do
 done
 _su="${SUNRISE//:/}"; _ss="${SUNSET//:/}"
 [ "$_su" -lt "$_ss" ] || { echo "FAIL: SUNRISE ($SUNRISE) must be earlier than SUNSET ($SUNSET)" >&2; exit 1; }
+# Same reasoning for the pin: an unrecognised value has to stop the run. Silently
+# ignoring it would leave the user with a switcher that neither follows the
+# schedule nor does what they asked, and nothing in the log to explain why.
+case "$OVERRIDE" in
+  ""|light|dark) ;;
+  *) echo "FAIL: OVERRIDE='$OVERRIDE' in $UCFG/switch.conf must be empty, light or dark" >&2; exit 1 ;;
+esac
 
 LOGDIR="$UCFG"
 LOGFILE="$LOGDIR/switch.log"
@@ -41,6 +55,23 @@ LOGFILE="$LOGDIR/switch.log"
 log(){ printf '%s %s\n' "$(date +%Y-%m-%dT%H:%M:%S)" "$*" >&2
       mkdir -p "$LOGDIR" 2>/dev/null && printf '%s %s\n' "$(date +%Y-%m-%dT%H:%M:%S)" "$*" >> "$LOGFILE" 2>/dev/null || true
     }
+
+# Record the pin in switch.conf. The file is sourced, so it is written whole and
+# swapped in atomically - a half-written switch.conf would fail to source and
+# silently disable switching from then on. Only OVERRIDE= lines are rewritten, so
+# hand-edited times and comments survive. Called only after a mode actually
+# applied: a pin on a mode we failed to reach would be a lie.
+set_override() { # set_override <""|light|dark>
+  local v="$1" tmp
+  mkdir -p "$UCFG"
+  [ -f "$UCFG/switch.conf" ] || printf 'SUNRISE=%s\nSUNSET=%s\n' "$SUNRISE" "$SUNSET" > "$UCFG/switch.conf"
+  tmp="$UCFG/switch.conf.tmp.$$"
+  grep -v '^OVERRIDE=' "$UCFG/switch.conf" > "$tmp" || true
+  printf 'OVERRIDE=%s\n' "$v" >> "$tmp"
+  mv -f "$tmp" "$UCFG/switch.conf"
+}
+
+override_label() { [ -n "$OVERRIDE" ] && echo "$OVERRIDE" || echo none; }
 
 desired_mode() {
   local now up dn
@@ -91,9 +122,21 @@ session_busy() {
 # ---- actions ---------------------------------------------------------------
 case "${1:---auto}" in
   --light|--dark)
-    apply_mode "${1#--}"
+    apply_mode "${1#--}" || exit $?   # only pin a mode that actually applied
+    set_override "${1#--}"
+    log "override pinned to ${1#--} (schedule paused until --follow-schedule)"
+    echo "pinned override=${1#--} - the timer will leave this alone"
+    echo "hand control back to the schedule with: $0 --follow-schedule"
     ;;
   --auto)
+    # The pin is checked before anything is applied. This is the timer's only
+    # entry point and it fires every 15 min, so a pin honoured after the apply
+    # would simply be undone on the next tick.
+    if [ -n "$OVERRIDE" ]; then
+      echo "override=$OVERRIDE is pinned; not switching (clear with: $0 --follow-schedule)"
+      log "override $OVERRIDE pinned: --auto is a no-op (clear with --follow-schedule)"
+      exit 0
+    fi
     D="$(desired_mode)"; C="$(current_mode)"
     echo "switch: desired=$D current=$C (sunrise=$SUNRISE sunset=$SUNSET)"
     if [ "$D" = "$C" ]; then echo "no change needed"; exit 0; fi
@@ -106,12 +149,22 @@ case "${1:---auto}" in
     ;;
   --check)
     D="$(desired_mode)"; C="$(current_mode)"
-    echo "desired=$D current=$C sunrise=$SUNRISE sunset=$SUNSET"
+    echo "desired=$D current=$C sunrise=$SUNRISE sunset=$SUNSET override=$(override_label)"
+    ;;
+  --follow-schedule)
+    if [ -z "$OVERRIDE" ]; then
+      echo "no override set - already following the schedule"
+      exit 0
+    fi
+    prev="$OVERRIDE"; set_override ""
+    log "override cleared (was $prev): following the schedule again"
+    echo "override cleared (was $prev)"
+    echo "next timer tick (within 15 min) will apply $(desired_mode)"
     ;;
   --install)
     mkdir -p "$UCFG" "$HOME/.config/systemd/user"
     [ -f "$UCFG/switch.conf" ] && echo "kept $UCFG/switch.conf" \
-      || { printf 'SUNRISE=%s\nSUNSET=%s\n' "$SUNRISE" "$SUNSET" > "$UCFG/switch.conf"; echo "wrote $UCFG/switch.conf"; }
+      || { printf 'SUNRISE=%s\nSUNSET=%s\nOVERRIDE=\n' "$SUNRISE" "$SUNSET" > "$UCFG/switch.conf"; echo "wrote $UCFG/switch.conf"; }
     cat > "$HOME/.config/systemd/user/$SVC" <<EOF
 [Unit]
 Description=kde-macos dark/light switcher
@@ -136,7 +189,8 @@ EOF
     systemctl --user daemon-reload
     systemctl --user enable --now "$TIM"
     echo "installed: $TIM (runs every 15 min, first fire 2 min after login)"
-    echo "config:    $UCFG/switch.conf"
+    echo "config:    $UCFG/switch.conf  (SUNRISE/SUNSET; OVERRIDE=light|dark pins a mode)"
+    echo "override:  $0 --light|--dark to pin, $0 --follow-schedule to clear"
     ;;
   --uninstall)
     systemctl --user disable --now "$TIM" 2>/dev/null || true
@@ -145,7 +199,7 @@ EOF
     echo "uninstalled: $TIM"
     ;;
   *)
-    echo "usage: $0 [--auto|--check|--install|--uninstall|--light|--dark]"
+    echo "usage: $0 [--auto|--check|--install|--uninstall|--light|--dark|--follow-schedule]"
     exit 2
     ;;
 esac
