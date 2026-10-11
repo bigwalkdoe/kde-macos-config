@@ -1,0 +1,99 @@
+name: Bug report
+description: Something in the config behaves differently from how it should
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing this. Two things make most reports answerable on the
+        first reply:
+
+        **Paste the `verify.sh` output below.** It is the project's own check of
+        applied state, and most reports are answered by the line it FAILs on.
+
+        **Say how you got here** — a fresh install, `./apply.sh`, or a run of
+        another script. Reproducing from the command that changed things is
+        usually faster than reproducing by hand.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, including any error text verbatim.
+      placeholder: The top panel is missing after login; `switch.sh --auto` logs `override dark is pinned...` every 15 minutes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+      description: One or two lines is plenty.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verify-output
+    attributes:
+      label: verify.sh output
+      description: |
+        ```
+        cd kde-macos-config && ./verify.sh 2>&1
+        ```
+        Paste everything from the `=== verification ===` header to the result
+        line. Mark anything you have since undone — `verify.sh` reports the
+        current state, so a change made after the problem started will show up
+        in it.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: entry-point
+    attributes:
+      label: How did you hit this
+      multiple: true
+      options:
+        - ./apply.sh
+        - ./switch.sh --auto
+        - ./switch.sh --light / --dark
+        - ./sync.sh
+        - ./backup.sh or ./rollback.sh
+        - scripts/check-storage.sh
+        - a systemd timer firing on its own
+        - just after logging in
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Output of `plasmashell --version` and `cat /etc/fedora-release`.
+      placeholder: Plasma 6.1.5; Fedora Linux 40 (Workstation Edition)
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Mac model and graphics
+      description: Relevant to almost everything here — this config is tuned for Apple Silicon.
+      placeholder: MacBook Pro 14" M3 Pro; llvmpipe / amdgpu
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Anything else
+      description: |
+        Logs, recent changes, what you already tried. Leave empty if you have
+        nothing.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this is not a duplicate
+          required: true
+        - label: I can reproduce this again after a reboot
