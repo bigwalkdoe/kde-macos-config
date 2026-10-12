@@ -297,18 +297,49 @@ BKL="$(ls -1dt "$HOME"/.config/kde-backups/*/ 2>/dev/null | head -1)"
 CHK "timestamped backup exists" "yes" "$([ -n "$BKL" ] && echo yes || echo no)"
 [ -n "$BKL" ] && echo "  latest: $BKL"
 
-echo "--- sddm-login (optional extra; install: sudo ./scripts/install-sddm-orchis.sh) ---"
-SDDM_THEME="/usr/share/sddm/themes/Orchis"
+echo "--- sddm-login (enterprise: Orchis-Mac theme + security hardening) ---"
+SDDM_THEME="/usr/share/sddm/themes/Orchis-Mac"
 SDDM_CONF="/etc/sddm.conf.d/theme.conf"
 if [ -d "$SDDM_THEME" ] && [ -f "$SDDM_CONF" ]; then
-  CHK "sddm theme installed (metadata Name=Orchis)" "yes" \
-    "$([ -f "$SDDM_THEME/metadata.desktop" ] && grep -q '^Name=Orchis$' "$SDDM_THEME/metadata.desktop" && echo yes || echo no)"
-  CHK "sddm greeter config -> current=Orchis" "Orchis" \
+  CHK "sddm theme installed (metadata Name=Orchis-Mac)" "yes" \
+    "$([ -f "$SDDM_THEME/metadata.desktop" ] && grep -q '^Name=Orchis-Mac$' "$SDDM_THEME/metadata.desktop" && echo yes || echo no)"
+  CHK "sddm greeter config -> current=Orchis-Mac" "Orchis-Mac" \
     "$(sed -n 's/^Current=//p' "$SDDM_CONF" | head -1)"
-  CHK "sddm cursor preserved (not empty)" "yes" \
-    "$([ -n "$(sed -n 's/^CursorTheme=//p' "$SDDM_CONF")" ] && echo yes || echo no)"
-  CHK "sddm font preserved (not empty)" "yes" \
-    "$([ -n "$(sed -n 's/^Font=//p' "$SDDM_CONF")" ] && echo yes || echo no)"
+  CHK "sddm cursor configured" "Bibata-Modern-Ice" \
+    "$(sed -n 's/^CursorTheme=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm font configured" "Inter,10,-1,5,50,0,0,0,0,0" \
+    "$(sed -n 's/^Font=//p' "$SDDM_CONF" | head -1)"
+
+  # Enterprise security features
+  CHK "sddm: failed login logging enabled" "true" \
+    "$(sed -n 's/^LogFailedLogins=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm: brute-force protection (MaxFailedAttempts)" "5" \
+    "$(sed -n 's/^MaxFailedAttempts=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm: account lockout duration (LockoutDuration)" "300" \
+    "$(sed -n 's/^LockoutDuration=//p' "$SDDM_CONF" | head -1)"
+
+  # Enterprise privacy/accessibility
+  CHK "sddm: system account filtering (MinimumUid)" "1000" \
+    "$(sed -n 's/^MinimumUid=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm: hidden users configured" "guest,test,demo" \
+    "$(sed -n 's/^HiddenUsers=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm: numlock enabled for password entry" "on" \
+    "$(sed -n 's/^Numlock=//p' "$SDDM_CONF" | head -1)"
+  CHK "sddm: keyboard layout indicator" "true" \
+    "$(sed -n 's/^ShowLayoutIndicator=//p' "$SDDM_CONF" | head -1)"
+
+  # Session management
+  CHK "sddm: default session = plasma" "plasma" \
+    "$(sed -n 's/^DefaultSession=//p' "$SDDM_CONF" | head -1)"
+
+  # Custom theme assets
+  CHK "sddm: custom logo installed" "yes" \
+    "$([ -f "$SDDM_THEME/assets/logo.svg" ] && echo yes || echo no)"
+  CHK "sddm: custom background installed" "yes" \
+    "$([ -f "$SDDM_THEME/background.jpg" ] && echo yes || echo no)"
+  CHK "sddm: custom login UI installed" "yes" \
+    "$([ -f "$SDDM_THEME/Login.qml" ] && echo yes || echo no)"
+
   if command -v sddm-greeter-qt6 >/dev/null && [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
     timeout 5 sddm-greeter-qt6 --test-mode --theme "$SDDM_THEME" &>/dev/null &
     SPID=$!

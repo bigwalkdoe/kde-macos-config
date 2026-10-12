@@ -261,6 +261,20 @@ gtk-xft-dpi=98304
 EOF
 done
 
+say "SDDM: enterprise login screen (Orchis theme + hardening)"
+if command -v sudo >/dev/null && sudo -n true 2>/dev/null; then
+  SUDO="sudo"
+elif [ "$(id -u)" -eq 0 ]; then
+  SUDO=""
+else
+  SUDO="sudo"
+  echo "note: SDDM config requires root; will prompt for sudo"
+fi
+$SUDO mkdir -p /etc/sddm.conf.d
+$SUDO cp "$ROOT/config/applied-sddm.conf" /etc/sddm.conf.d/theme.conf || die "sddm config"
+$SUDO chmod 644 /etc/sddm.conf.d/theme.conf
+echo "Applied enterprise SDDM config to /etc/sddm.conf.d/theme.conf"
+
 say "Autostart: sync from scripts/autostart.list"
 bash "$ROOT/scripts/manage-autostart.sh" || die "autostart sync failed"
 
