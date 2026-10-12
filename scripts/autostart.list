@@ -1,0 +1,17 @@
+# kde-macos-config -- autostart applications
+#
+# One .desktop file ID per line. Blank lines and # comments are ignored.
+# To disable an app from autostarting, delete its line here and re-run ./apply.sh
+# This manages ~/.config/autostart/ by symlinking from /usr/share/applications/
+# or /etc/xdg/autostart/ -- the systemd/user session reads this directory.
+#
+# Format: <desktop-file-id>  # optional comment
+# Example: org.kde.konsole.desktop  # Terminal
+
+# Example entries (uncomment and customize):
+# org.kde.kdeconnect.daemon.desktop        # KDE Connect
+# org.kde.plasma.vault.desktop             # Plasma Vault
+# com.dropbox.Client.desktop               # Dropbox
+# com.slack.Slack.desktop                  # Slack
+# org.mozilla.firefox.desktop              # Firefox (restore session)
+# com.google.Chrome.desktop                # Chrome (restore session)

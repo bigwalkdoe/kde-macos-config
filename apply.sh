@@ -261,6 +261,29 @@ gtk-xft-dpi=98304
 EOF
 done
 
+say "Autostart: sync from scripts/autostart.list"
+bash "$ROOT/scripts/manage-autostart.sh" || die "autostart sync failed"
+
+say "Baloo: file indexing (conservative, local only)"
+mkdir -p "$HOME/.config"
+cp "$ROOT/config/applied-baloofilerc.conf" "$HOME/.config/baloofilerc" || die "baloo config"
+
+say "Power Management: macOS-like profiles"
+mkdir -p "$HOME/.config"
+cp "$ROOT/config/applied-powermanagementprofilesrc.conf" "$HOME/.config/powermanagementprofilesrc" || die "power management config"
+
+say "Notifications: banner style, grouped, no sounds"
+mkdir -p "$HOME/.config"
+cp "$ROOT/config/applied-plasma-notifications.conf" "$HOME/.config/plasma-notifications.conf" || die "notifications config"
+
+say "Global Shortcuts: macOS-style bindings"
+mkdir -p "$HOME/.config"
+# kglobalaccel5 format: write each shortcut via kwriteconfig6
+while IFS='=' read -r key value; do
+  case "$key" in \#*|'') continue ;; esac
+  kwriteconfig6 --file kglobalshortcutsrc --group "Global Shortcuts" --key "$key" "$value" || die "shortcut $key"
+done < <(grep -vE '^\s*(\#|$)' "$ROOT/config/applied-kglobalshortcutsrc.conf" | grep '=')
+
 say "Desktop: clean (no icons) containment"
 APP=plasma-org.kde.plasma.desktop-appletsrc
 if [ -f "$HOME/.config/$APP" ]; then

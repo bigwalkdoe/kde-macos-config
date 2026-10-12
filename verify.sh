@@ -225,6 +225,56 @@ else
   FAILED=$((FAILED+1))
 fi
 
+echo "--- baloo (file indexing) ---"
+BALOO="$CFG/baloofilerc"
+if [ -f "$BALOO" ]; then
+  CHK "baloo: onlyIndexLocalFiles=true" "true" "$(kreadconfig6 --file baloofilerc --group General --key onlyIndexLocalFiles 2>/dev/null)"
+  CHK "baloo: useInotify=true" "true" "$(kreadconfig6 --file baloofilerc --group General --key useInotify 2>/dev/null)"
+  CHK "baloo: excludeFilters present" "yes" "$(kreadconfig6 --file baloofilerc --group General --key excludeFilters 2>/dev/null | grep -q . && echo yes || echo no)"
+  CHK "baloo: excludeFolders present" "yes" "$(kreadconfig6 --file baloofilerc --group General --key excludeFolders 2>/dev/null | grep -q . && echo yes || echo no)"
+else
+  echo "FAIL  $BALOO missing"
+  FAILED=$((FAILED+1))
+fi
+
+echo "--- power management (macOS-like profiles) ---"
+PMP="$CFG/powermanagementprofilesrc"
+if [ -f "$PMP" ]; then
+  CHK "pm: AC lidClose=0 (no sleep on lid close when docked)" "0" "$(kreadconfig6 --file powermanagementprofilesrc --group AC --group HandleButtonEvents --key lidClose 2>/dev/null)"
+  CHK "pm: Battery lidClose=1 (sleep on lid close)" "1" "$(kreadconfig6 --file powermanagementprofilesrc --group Battery --group HandleButtonEvents --key lidClose 2>/dev/null)"
+  CHK "pm: LowBattery suspendThenHibernate=true" "true" "$(kreadconfig6 --file powermanagementprofilesrc --group LowBattery --group SuspendSession --key suspendThenHibernate 2>/dev/null)"
+else
+  echo "FAIL  $PMP missing"
+  FAILED=$((FAILED+1))
+fi
+
+echo "--- notifications (banner, grouped, no sounds) ---"
+NOTIF="$CFG/plasma-notifications.conf"
+if [ -f "$NOTIF" ]; then
+  CHK "notif: UseBannerNotifications=true" "true" "$(kreadconfig6 --file plasma-notifications.conf --group GlobalSettings --key UseBannerNotifications 2>/dev/null)"
+  CHK "notif: PlaySounds=false" "false" "$(kreadconfig6 --file plasma-notifications.conf --group GlobalSettings --key PlaySounds 2>/dev/null)"
+  CHK "notif: GroupByApp=true" "true" "$(kreadconfig6 --file plasma-notifications.conf --group GlobalSettings --key GroupByApp 2>/dev/null)"
+  CHK "notif: AutoDoNotDisturbOnPresent=true" "true" "$(kreadconfig6 --file plasma-notifications.conf --group GlobalSettings --key AutoDoNotDisturbOnPresent 2>/dev/null)"
+else
+  echo "FAIL  $NOTIF missing"
+  FAILED=$((FAILED+1))
+fi
+
+echo "--- global shortcuts (macOS-style) ---"
+SHORTCUTS="$CFG/kglobalshortcutsrc"
+if [ -f "$SHORTCUTS" ]; then
+  # Check key shortcuts exist
+  for sc in "Meta+Space=org.kde.krunner,activate" "Meta+Return=org.kde.konsole,activate" "Meta+E=org.kde.dolphin,activate" "Meta+W=org.kde.kwin,close" "Meta+Left=org.kde.kwin,quicktile-left" "Meta+Right=org.kde.kwin,quicktile-right" "Meta+Up=org.kde.kwin,maximize" "Meta+Down=org.kde.kwin,minimize" "Meta+F=org.kde.kwin,fullscreen" "Meta+1=org.kde.kwin,switch-to-desktop-1" "Meta+Shift+Q=org.kde.ksmserver,logout" "Meta+L=org.kde.ksmserver,lock"; do
+    key="${sc%%=*}"
+    val="${sc#*=}"
+    got="$(kreadconfig6 --file kglobalshortcutsrc --group 'Global Shortcuts' --key "$key" 2>/dev/null)"
+    CHK "shortcut $key -> $val" "$val" "${got:-(unset)}"
+  done
+else
+  echo "FAIL  $SHORTCUTS missing"
+  FAILED=$((FAILED+1))
+fi
+
 echo "--- wallpaper ---"
 WALL_NAME="wavy_lines_v02_5120x2880.png"
 WALL_LIVE="$HOME/.local/share/wallpapers/kde-setup-02/$WALL_NAME"
