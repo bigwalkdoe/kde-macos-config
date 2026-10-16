@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/check-storage.sh
+# spectre-kde-config -- scripts/check-storage.sh
 # Settles the fs-verity digest-mismatch question that verify.sh reports as a WARN.
 #
 # verify.sh can only count mismatches, because "btrfs scrub status" and the

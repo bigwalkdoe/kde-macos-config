@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/splash-theme-path.sh
+# spectre-kde-config -- scripts/splash-theme-path.sh
 # Resolve a Plasma 6 splash theme name to its package directory (stdout).
 # Exit 0 = resolved, 1 = not found.
 #

@@ -1,4 +1,4 @@
-# kde-macos-config
+# spectre-kde-config
 
 A clean, reversible, reproducible KDE Plasma configuration that gives Fedora KDE
 a polished **macOS-inspired** workflow while staying 100% native to KDE Plasma.
@@ -70,7 +70,7 @@ a polished **macOS-inspired** workflow while staying 100% native to KDE Plasma.
 ## 3. Repository layout
 
 ```
-kde-macos-config/
+spectre-kde-config/
 ├── README.md            this file
 ├── backup.sh            timestamped backup -> ~/.config/kde-backups/ (+ retention)
 ├── apply.sh             [--light|--dark] preflight -> backup -> apply -> verify
@@ -108,7 +108,7 @@ per machine and are *not* normalized.
 ## 4. Quick start
 
 ```bash
-cd ~/kde-macos-config
+cd ~/spectre-kde-config
 ./detect.sh          # inventory (read-only)
 ./apply.sh           # apply the light look
 ./apply.sh --dark    # apply the dark look
@@ -385,7 +385,7 @@ quarter hour. `--light`/`--dark` now records `OVERRIDE=light|dark` in
   `sudo ./scripts/install-sddm-orchis.sh`. The installer exits immediately if
   the theme is already present and configured; pass `--force` to re-clone and
   reinstall anyway. Preview without logging out:
-  `sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/Orchis &`.
+  `sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/Orchis-Mac &`.
 - **Reboot persistence:** verify.sh records the boot ID when apply.sh succeeds
   (`.applied-light`/`.applied-dark`). On a later run it reports **PASS** if the
   system has since rebooted (settings survived a full reboot), or an INFO hint

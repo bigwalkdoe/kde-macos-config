@@ -39,7 +39,7 @@ body:
       label: verify.sh output
       description: |
         ```
-        cd kde-macos-config && ./verify.sh 2>&1
+        cd spectre-kde-config && ./verify.sh 2>&1
         ```
         Paste everything from the `=== verification ===` header to the result
         line. Mark anything you have since undone — `verify.sh` reports the

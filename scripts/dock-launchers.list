@@ -1,4 +1,4 @@
-# kde-macos-config -- pinned dock launchers
+# spectre-kde-config -- pinned dock launchers
 #
 # One app per line, in dock order. Blank lines and # comments are ignored.
 # To remove an app from the dock, delete its line here and re-run ./apply.sh --

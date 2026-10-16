@@ -1,4 +1,4 @@
-// kde-macos-config — panel layout script (Plasma 6 native scripting API)
+// spectre-kde-config — panel layout script (Plasma 6 native scripting API)
 //
 // This script is executed by plasmashell via:
 //   org.kde.PlasmaShell.evaluateScript (D-Bus)

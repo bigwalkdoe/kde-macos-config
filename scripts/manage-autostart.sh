@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- manage-autostart.sh
+# spectre-kde-config -- manage-autostart.sh
 # Reads scripts/autostart.list and ensures ~/.config/autostart/ matches exactly.
 # Creates symlinks to .desktop files in /usr/share/applications/ or /etc/xdg/autostart/.
 # Removes any autostart entries not listed (opt-in declarative model).

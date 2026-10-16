@@ -1,4 +1,4 @@
-// kde-macos-config — system tray curation (Plasma 6 scripting API)
+// spectre-kde-config — system tray curation (Plasma 6 scripting API)
 //
 // Curates which status items are pinned in the top-bar system tray, in order:
 //   clipboard, network, bluetooth, volume, brightness, battery, notifications

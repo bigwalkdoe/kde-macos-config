@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/patch-lnf.sh
+# spectre-kde-config -- scripts/patch-lnf.sh
 # The Orchis look-and-feel packages (both the system copy and any user-local
 # shadow installed by the Global Theme KCM) ship contents/defaults that point
 # at cursors/icons which are NOT installed here:

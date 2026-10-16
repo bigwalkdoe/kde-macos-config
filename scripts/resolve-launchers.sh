@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/resolve-launchers.sh [LISTFILE]
+# spectre-kde-config -- scripts/resolve-launchers.sh [LISTFILE]
 # Print the pinned dock launcher list for layout.js on stdout, as a single
 # comma-separated line of "applications:<desktop-file-id>" entries.
 # Progress and skipped entries go to stderr, so apply.sh can capture stdout alone.

@@ -3,6 +3,7 @@ import org.kde.breeze.components
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15 as QQC2
+import Qt5Compat.GraphicalEffects 1.0
 import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.plasma.extras 2.0 as PlasmaExtras
 import org.kde.kirigami 2.20 as Kirigami
@@ -67,6 +68,84 @@ SessionManagementScreen {
         visible: false // We use individual inputs below
     }
 
+    // User avatar with subtle glow
+    Item {
+        id: userAvatar
+        Layout.margins: Kirigami.Units.largeSpacing
+        Layout.preferredWidth: 80
+        Layout.preferredHeight: 80
+        visible: !showUsernamePrompt
+
+        DropShadow {
+            anchors.fill: avatarContainer
+            source: avatarContainer
+            visible: parent.visible
+            radius: 14
+            samples: 25
+            color: root.loginScreenUiVisible ? "#551A73E8" : "#44000000"
+            horizontalOffset: 0
+            verticalOffset: 5
+            spread: 0.1
+            transparentBorder: true
+            z: -1
+            Behavior on color { ColorAnimation { duration: 300 } }
+        }
+
+        Rectangle {
+            id: avatarContainer
+            anchors.centerIn: parent
+            width: 80
+            height: 80
+            radius: 40
+            clip: true
+            scale: root.loginScreenUiVisible ? 1.0 : 0.92
+            border.width: 2
+            border.color: root.loginScreenUiVisible ? "#1A73E8" : "#3A5A7A"
+            Behavior on border.color {
+                ColorAnimation { duration: 300 }
+            }
+
+            Behavior on scale {
+                NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+            }
+
+            Image {
+                id: avatarImage
+                anchors.fill: parent
+                source: userList.currentUserImage
+                fillMode: Image.PreserveAspectCrop
+                smooth: true
+                asynchronous: true
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: avatarImage.status !== Image.Ready
+                text: "U"
+                color: "#FFFFFF"
+                font.pointSize: 28
+                font.bold: true
+                opacity: root.loginScreenUiVisible ? 1.0 : 0.85
+            }
+        }
+    }
+
+    // Friendly greeting, visible only when a user is selected
+    Text {
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.smallSpacing
+        visible: !showUsernamePrompt
+        text: i18nd("plasma-desktop-sddm-theme", "Welcome")
+        color: "#FFFFFF"
+        font.pointSize: fontSize + 6
+        font.bold: true
+        font.family: config.Font || "Inter"
+        opacity: root.loginScreenUiVisible ? 1.0 : 0.75
+        Behavior on opacity {
+            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+        }
+    }
+
     Input {
         id: userNameInput
         Layout.fillWidth: true
@@ -85,7 +164,7 @@ SessionManagementScreen {
         leftPadding: 16
         rightPadding: 16
         background: Rectangle {
-            radius: 10
+            radius: 22
             border.width: 1.5
             border.color: userNameInput.activeFocus ? "#1A73E8" : (root.loginScreenUiVisible ? "#4A90D9" : "#3A5A7A")
             color: userNameInput.activeFocus ? "#253545" : (root.loginScreenUiVisible ? "#1E2A3A" : "#151E2A")
@@ -105,20 +184,20 @@ SessionManagementScreen {
         Layout.margins: Kirigami.Units.largeSpacing
         Layout.preferredHeight: 44
         font.pointSize: fontSize + 2
-        font.family: config.Font || "Noto Sans"
-        placeholderText: config.PasswordFieldPlaceholderText == "Password" ? i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Password") : config.PasswordFieldPlaceholderText
+        font.family: config.Font || "Inter"
+        placeholderText: (config.PasswordFieldPlaceholderText === "Password" || !config.PasswordFieldPlaceholderText) ? i18nd("plasma_lookandfeel_org.kde.lookandfeel", "Password") : config.PasswordFieldPlaceholderText
         focus: !showUsernamePrompt || lastUserName
         echoMode: TextInput.Password
         onAccepted: startLogin()
         placeholderTextColor: "#8A9BB0"
-        passwordCharacter: config.PasswordFieldCharacter == "" ? "●" : config.PasswordFieldCharacter
+        passwordCharacter: (config.PasswordFieldCharacter === "" || !config.PasswordFieldCharacter) ? "●" : config.PasswordFieldCharacter
         color: "#FFFFFF"
         selectionColor: "#1A73E8"
         selectedTextColor: "#FFFFFF"
         leftPadding: 16
         rightPadding: 16
         background: Rectangle {
-            radius: 10
+            radius: 22
             border.width: 1.5
             border.color: passwordBox.activeFocus ? "#1A73E8" : (root.loginScreenUiVisible ? "#4A90D9" : "#3A5A7A")
             color: passwordBox.activeFocus ? "#253545" : (root.loginScreenUiVisible ? "#1E2A3A" : "#151E2A")
@@ -183,6 +262,9 @@ SessionManagementScreen {
             Behavior on color {
                 ColorAnimation { duration: 100 }
             }
+            Behavior on scale {
+                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+            }
         }
 
         Image {
@@ -195,11 +277,17 @@ SessionManagementScreen {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            onEntered: buttonBg.color = "#2A83F8"
-            onExited: buttonBg.color = "#1A73E8"
+            onEntered: {
+                buttonBg.color = "#2A83F8"
+                buttonBg.scale = 1.06
+            }
+            onExited: {
+                buttonBg.color = "#1A73E8"
+                buttonBg.scale = 1.0
+            }
             onPressed: {
                 buttonBg.color = "#0A5FC8"
-                buttonBg.scale = 0.95
+                buttonBg.scale = 0.94
             }
             onReleased: {
                 buttonBg.color = "#1A73E8"
@@ -223,37 +311,6 @@ SessionManagementScreen {
             to: 0
             duration: 120
             easing.type: Easing.InCubic
-        }
-    }
-
-    // User avatar with subtle glow
-    Item {
-        id: userAvatar
-        Layout.margins: Kirigami.Units.largeSpacing
-        Layout.preferredWidth: 80
-        Layout.preferredHeight: 80
-        visible: !showUsernamePrompt
-
-        Rectangle {
-            id: avatarContainer
-            anchors.centerIn: parent
-            width: 80
-            height: 80
-            radius: 40
-            clip: true
-            border.width: 2
-            border.color: root.loginScreenUiVisible ? "#1A73E8" : "#3A5A7A"
-            Behavior on border.color {
-                ColorAnimation { duration: 300 }
-            }
-
-            Image {
-                id: avatarImage
-                anchors.fill: parent
-                source: userList.currentUserImage
-                fillMode: Image.PreserveAspectCrop
-                smooth: true
-            }
         }
     }
 }

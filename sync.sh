@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config — sync.sh
+# spectre-kde-config — sync.sh
 # Snapshots the live KDE config into config/ as a record of what is actually
 # applied on this machine. These snapshots are DIAGNOSTIC: nothing in this repo
 # reads them (apply.sh drives everything through kwriteconfig6 and the Plasma
@@ -120,7 +120,7 @@ ver="$(git rev-parse --short HEAD)"
 
 # ---- read-only drift check ------------------------------------------------
 if [ "$MODE" = "check" ]; then
-  echo "=== kde-macos-config: sync --check ($(date +%Y-%m-%d\ %H:%M:%S)) ==="
+  echo "=== spectre-kde-config: sync --check ($(date +%Y-%m-%d\ %H:%M:%S)) ==="
   echo "read-only: no files will be written, fc-cache will not run"
   tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
   drift=0
@@ -157,7 +157,7 @@ if [ "$MODE" = "check" ]; then
 fi
 
 # ---- snapshot ------------------------------------------------------------
-echo "=== kde-macos-config: sync ($(date +%Y-%m-%d\ %H:%M:%S)) ==="
+echo "=== spectre-kde-config: sync ($(date +%Y-%m-%d\ %H:%M:%S)) ==="
 changed=0
 for pair in "${PAIRS[@]}"; do
   src="${pair%%::*}"; dst="${pair##*::}"

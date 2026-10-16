@@ -1,0 +1,16 @@
+[SddmGreeterTheme]
+Name=Orchis-Mac
+Description=macOS-inspired Orchis SDDM Theme
+Author=Vince Liuice (Orchis), spectre-kde-config (customizations)
+Copyright=(c) 2020, Vince Liuice; (c) 2024, spectre-kde-config
+License=CC-BY-SA
+Type=sddm-theme
+Version=1.0.0
+Website=https://github.com/bigwalkdoe/spectre-kde-config
+Screenshot=preview.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Theme-Id=Orchis-Mac
+Theme-API=2.0
+QtVersion=6

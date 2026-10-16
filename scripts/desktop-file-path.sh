@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/desktop-file-path.sh
+# spectre-kde-config -- scripts/desktop-file-path.sh
 # Print the path of the installed .desktop file for <desktop-file-id>, or exit 1
 # if no such desktop file exists.
 #

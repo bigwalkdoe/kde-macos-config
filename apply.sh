@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- apply.sh
+# spectre-kde-config -- apply.sh
 # macOS-inspired Plasma, applied safely & reversibly:
 #   preflight -> verified timestamped backup -> theme/colors/icons/cursor ->
 #   kwin (decoration/workspaces/effects) -> GTK -> plasmashell restart ->

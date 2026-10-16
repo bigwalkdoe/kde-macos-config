@@ -1,4 +1,4 @@
-# kde-macos-config -- autostart applications
+# spectre-kde-config -- autostart applications
 #
 # One .desktop file ID per line. Blank lines and # comments are ignored.
 # To disable an app from autostarting, delete its line here and re-run ./apply.sh

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/install-sddm-orchis.sh
+# spectre-kde-config -- scripts/install-sddm-orchis.sh
 # Installs the Orchis-Mac SDDM (login screen) theme and switches the greeter to it.
 # Enterprise-grade: security hardening, accessibility, branding, session management.
 # Custom macOS-style UI: rounded inputs, custom logo, matching wallpaper, accent colors.

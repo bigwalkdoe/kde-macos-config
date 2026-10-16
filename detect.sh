@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config — detect.sh
+# spectre-kde-config — detect.sh
 # Non-destructive inventory of the desktop environment. Prints everything the
 # project's apply/verify scripts need to know.
 set -u

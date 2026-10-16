@@ -1,4 +1,4 @@
-// kde-macos-config — shared panels probe (Plasma 6 scripting API)
+// spectre-kde-config — shared panels probe (Plasma 6 scripting API)
 //
 // Single source of truth for "what panels/widgets exist right now", used by
 // both detect.sh (human inventory) and verify.sh (PASS/FAIL checks).

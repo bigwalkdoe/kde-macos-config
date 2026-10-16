@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- scripts/restore-backup.sh
+# spectre-kde-config -- scripts/restore-backup.sh
 # The ONE implementation of "put a backup back". Both rollback.sh and
 # apply.sh's automatic fail-safe go through here, so the list of restored files
 # exists exactly once and cannot drift between the two callers.

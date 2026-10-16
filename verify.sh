@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config -- verify.sh
+# spectre-kde-config -- verify.sh
 # Checks the applied result: file-level config + live plasmashell probing.
 set -u
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -15,7 +15,7 @@ CHKR(){ if [ "$4" -ge "$2" ] 2>/dev/null && [ "$4" -le "$3" ] 2>/dev/null; then 
 UNVERIFIED(){ echo "UNVERIFIED  $1  -- $2"; FAILED=$((FAILED+1)); }
 q(){ kreadconfig6 --file "$1" --group "$2" --key "$3" 2>/dev/null || echo "(unset)"; }
 
-echo "=== kde-macos-config: verification ==="
+echo "=== spectre-kde-config: verification ==="
 echo "Plasma: $(plasmashell --version 2>/dev/null)"
 
 echo "--- desktop ---"

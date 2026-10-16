@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# kde-macos-config — backup.sh
+# spectre-kde-config — backup.sh
 # Creates a timestamped, single-directory backup of every configuration file
 # that this project can touch. Prints the backup directory path on stdout.
 #

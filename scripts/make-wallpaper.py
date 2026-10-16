@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# kde-macos-config -- scripts/make-wallpaper.py
+# spectre-kde-config -- scripts/make-wallpaper.py
 # Generate the vendored desktop wallpaper.
 #
 # WHY A GENERATOR INSTEAD OF A BLOB: the previous wallpaper
@@ -111,7 +111,7 @@ def render(width=WIDTH, height=HEIGHT):
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Generate the vendored kde-macos-config desktop wallpaper."
+        description="Generate the vendored spectre-kde-config desktop wallpaper."
     )
     ap.add_argument("--preview", metavar="PATH", help="write a small proof sheet")
     ap.add_argument("--check", action="store_true", help="compare against the committed PNG")
